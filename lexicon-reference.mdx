@@ -1,0 +1,395 @@
+---
+title: Lexicon Reference
+description: The complete schema reference for all AT Protocol lexicons used by Kevara, covering both the open SIFA standard and Kevara's own sovereign namespace.
+---
+
+# Lexicon Reference
+
+Kevara operates across two distinct lexicon namespaces. Understanding the difference matters both for interoperability and for the sovereignty guarantee.
+
+**`id.sifa.*`** is an open professional data standard that Kevara implements. These schemas are not owned by Kevara. Any AT Protocol application can read and write SIFA records, which is exactly the point. Your career history, education, and professional graph written via Kevara are readable by any compliant app in the ecosystem.
+
+**`is.kevara.*`** is Kevara's own namespace. These schemas cover the portfolio presentation layer, link page configuration, network identity, and verification state. They are published and versioned by Kevara. Third-party AT Protocol clients can read these records to render Kevara profile data wherever a user's DID appears.
+
+All records in both namespaces are stored exclusively on the user's Personal Data Server (PDS). Kevara holds no copies.
+
+---
+
+## The SIFA Standard (`id.sifa.*`)
+
+The [SIFA Standard](https://sifa.id) is an open lexicon specification for portable professional identity on AT Protocol. Kevara implements SIFA as the authoritative schema for all resume-grade career data. The primary account is always the SIFA write authority; secondary connected accounts contribute network reach and activity but do not maintain independent SIFA records.
+
+The following documents the SIFA lexicons Kevara currently reads and writes. For the canonical SIFA specification, refer to the SIFA Standard documentation.
+
+---
+
+### `id.sifa.profile`
+
+The base professional profile record. Extends `app.bsky.actor.profile` with structured career metadata.
+
+**Record key:** singleton (one per account)  
+**Written by:** Primary account only  
+**Read by:** Kevara profile renderer, any SIFA-compliant app
+
+| Field         | Type          | Required | Description                                                      |
+| ------------- | ------------- | -------- | ---------------------------------------------------------------- |
+| `displayName` | string        | yes      | Full professional name                                           |
+| `headline`    | string        | no       | Single-line professional summary (max 160 chars)                 |
+| `location`    | string        | no       | City, region, or country                                         |
+| `website`     | string (uri)  | no       | Primary professional website                                     |
+| `pronouns`    | string        | no       | Preferred pronouns                                               |
+| `openTo`      | array[string] | no       | Known values: `work`, `consulting`, `collaboration`, `mentoring` |
+
+**Example record**
+
+```json
+{
+	"$type": "id.sifa.profile",
+	"displayName": "Jason Butterfield",
+	"headline": "Product Designer & Digital Sovereignty Advocate",
+	"location": "Shelburne, Ontario, CA",
+	"openTo": ["consulting", "collaboration"]
+}
+```
+
+---
+
+### `id.sifa.position`
+
+A single employment or contract position. Multiple records build the career timeline.
+
+**Record key:** tid (timestamp-based, ordered)  
+**Written by:** Primary account  
+**Read by:** Kevara career timeline, any SIFA-compliant app
+
+| Field             | Type         | Required | Description                                                                  |
+| ----------------- | ------------ | -------- | ---------------------------------------------------------------------------- |
+| `title`           | string       | yes      | Job title or role name                                                       |
+| `organisation`    | string       | yes      | Employer or client name                                                      |
+| `organisationDid` | string (did) | no       | DID of the organisation if on AT Protocol                                    |
+| `startDate`       | string       | yes      | ISO 8601 date (YYYY-MM or YYYY-MM-DD)                                        |
+| `endDate`         | string       | no       | ISO 8601 date. Absent = current position                                     |
+| `description`     | string       | no       | Role summary (max 1000 chars)                                                |
+| `location`        | string       | no       | Work location or "Remote"                                                    |
+| `employmentType`  | string       | no       | Known values: `full-time`, `part-time`, `contract`, `freelance`, `volunteer` |
+
+**Example record**
+
+```json
+{
+	"$type": "id.sifa.position",
+	"title": "Senior Product Designer",
+	"organisation": "Northern Studio",
+	"startDate": "2021-03",
+	"description": "Led design systems and digital sovereignty product work.",
+	"employmentType": "contract"
+}
+```
+
+---
+
+### `id.sifa.education`
+
+A single education record. Covers formal degrees, diplomas, bootcamps, and self-directed programs.
+
+**Record key:** tid  
+**Written by:** Primary account  
+**Read by:** Kevara education section, any SIFA-compliant app
+
+| Field            | Type         | Required | Description                                  |
+| ---------------- | ------------ | -------- | -------------------------------------------- |
+| `institution`    | string       | yes      | School, university, or program name          |
+| `institutionDid` | string (did) | no       | DID of the institution if on AT Protocol     |
+| `credential`     | string       | no       | Degree, diploma, certificate, or course name |
+| `fieldOfStudy`   | string       | no       | Subject area or major                        |
+| `startDate`      | string       | no       | ISO 8601 date                                |
+| `endDate`        | string       | no       | ISO 8601 date                                |
+| `description`    | string       | no       | Additional context (max 500 chars)           |
+
+---
+
+### `id.sifa.endorsement`
+
+A peer-to-peer signed skill endorsement. Written to the **endorsing user's own PDS**, pointing at the subject's DID. This is the fundamental trust mechanism: endorsements are not self-asserted and cannot be fabricated by the subject.
+
+**Record key:** tid  
+**Written by:** The endorsing user (to their own PDS)  
+**Read by:** Kevara trust display, endorsement aggregators
+
+| Field          | Type              | Required | Description                                                     |
+| -------------- | ----------------- | -------- | --------------------------------------------------------------- |
+| `subject`      | string (did)      | yes      | DID of the person being endorsed                                |
+| `skill`        | string            | yes      | Specific skill or competency being endorsed                     |
+| `relationship` | string            | no       | Endorser's relationship to subject (e.g. "colleague", "client") |
+| `note`         | string            | no       | Optional endorsement note (max 300 chars)                       |
+| `createdAt`    | string (datetime) | yes      | ISO 8601 timestamp                                              |
+
+**How Kevara renders endorsements**
+
+Kevara only surfaces endorsements from DIDs that carry a `kevara-verified` Ozone label. This prevents low-signal or bot endorsements from appearing as meaningful trust indicators. The endorsement record stays on the endorser's PDS permanently. The subject has no ability to delete it, which is intentional: the endorsement belongs to the person who gave it.
+
+**Example record**
+
+```json
+{
+	"$type": "id.sifa.endorsement",
+	"subject": "did:plc:subject-did-here",
+	"skill": "AT Protocol application architecture",
+	"relationship": "colleague",
+	"note": "Built one of the most thoughtful sovereign identity implementations on the protocol.",
+	"createdAt": "2026-05-01T10:00:00.000Z"
+}
+```
+
+---
+
+### `id.sifa.graph.follow`
+
+A professional inner circle connection. Distinct from a standard Bluesky social follow (`app.bsky.graph.follow`). This represents a deliberate, curated professional relationship rather than a content subscription.
+
+**Record key:** tid  
+**Written by:** The connecting user (to their own PDS)  
+**Read by:** Kevara Orbits view, professional graph tools
+
+| Field       | Type              | Required | Description                             |
+| ----------- | ----------------- | -------- | --------------------------------------- |
+| `subject`   | string (did)      | yes      | DID of the professional being connected |
+| `createdAt` | string (datetime) | yes      | ISO 8601 timestamp                      |
+
+**Note on Kevara's implementation**
+
+Kevara's Orbits feature reads `id.sifa.graph.follow` records across all connected accounts, deduplicates by DID, and merges into a unified professional network view. Connections are always written to the primary account's PDS only, regardless of which account surface the connection was initiated from.
+
+---
+
+## Kevara Lexicons (`is.kevara.*`)
+
+These are Kevara's own schemas, owned and versioned by Kevara. They cover the presentation and portfolio layer that sits above the SIFA data foundation. Third-party AT Protocol clients may read these records to render Kevara profile data wherever a user's DID appears.
+
+---
+
+### `is.kevara.linkpage`
+
+The primary Kevara profile configuration record. Holds link page content, article display preferences, multi-network account links, and publication connections. One record per account; updated in place.
+
+**Record key:** singleton  
+**Written by:** Kevara application (owner authenticated)  
+**Read by:** Kevara profile renderer, cross-network discovery
+
+| Field            | Type              | Required | Description                                            |
+| ---------------- | ----------------- | -------- | ------------------------------------------------------ |
+| `links`          | array[object]     | no       | Ordered list of profile links (see link object below)  |
+| `linkedAccounts` | array[object]     | no       | Connected AT Protocol accounts across networks         |
+| `articles`       | object            | no       | Article display preferences (format, pinned, hidden)   |
+| `publications`   | array[object]     | no       | Connected Standard.site or cross-protocol publications |
+| `updatedAt`      | string (datetime) | yes      | ISO 8601 timestamp of last write                       |
+
+**Link object**
+
+| Field         | Type         | Description                                        |
+| ------------- | ------------ | -------------------------------------------------- |
+| `id`          | string       | Unique identifier for this link                    |
+| `title`       | string       | Display label                                      |
+| `url`         | string (uri) | Destination URL                                    |
+| `description` | string       | Optional subtitle (max 120 chars)                  |
+| `verified`    | boolean      | Whether the URL has been domain-verified by Kevara |
+| `featured`    | boolean      | Whether to render as a featured (larger) card      |
+| `hidden`      | boolean      | Owner can hide without deleting                    |
+
+**linkedAccounts object**
+
+| Field       | Type         | Description                                               |
+| ----------- | ------------ | --------------------------------------------------------- |
+| `did`       | string (did) | DID of the linked account                                 |
+| `handle`    | string       | AT Protocol handle                                        |
+| `network`   | string       | Network name: `bluesky`, `gander`, `eurosky`, or PDS host |
+| `isPrimary` | boolean      | Whether this is the SIFA write authority account          |
+
+**articles object**
+
+| Field    | Type          | Description                                    |
+| -------- | ------------- | ---------------------------------------------- |
+| `format` | string        | Display format: `list`, `tiles`, or `carousel` |
+| `pinned` | array[string] | Article URIs pinned to top                     |
+| `hidden` | array[string] | Article URIs hidden from public display        |
+
+**Important:** The `linkedAccounts` field is what powers the cross-network verification panel on public profiles. When an owner views their own profile, Kevara syncs their connected accounts into this field, making their multi-network presence publicly discoverable without any central database. Profile visitors read this field directly from the PDS.
+
+---
+
+### `is.kevara.portfolio.item`
+
+A high-fidelity project or work sample card. Extends SIFA position records with editorial-grade presentation metadata, media, and tech stack information.
+
+**Record key:** tid  
+**Written by:** Kevara application (Sovereign Pro feature)  
+**Read by:** Kevara portfolio renderer, third-party AT Protocol clients
+
+| Field                  | Type              | Required | Description                                          |
+| ---------------------- | ----------------- | -------- | ---------------------------------------------------- |
+| `title`                | string            | yes      | Project or work sample title (max 100 chars)         |
+| `description`          | string            | yes      | Project summary (max 500 chars)                      |
+| `uri`                  | string (uri)      | yes      | Primary URL for the project or work                  |
+| `thumb`                | blob              | no       | Cover image. Stored on user's PDS. Max 1MB, image/\* |
+| `techStack`            | array[string]     | no       | Technologies, tools, or frameworks used              |
+| `associatedSifaRecord` | string            | no       | AT-URI of the related `id.sifa.position` record      |
+| `layoutHint`           | string            | no       | Known values: `featured`, `standard`, `compact`      |
+| `createdAt`            | string (datetime) | yes      | ISO 8601 timestamp                                   |
+
+**On blob storage**
+
+The `thumb` field references a blob stored on the user's own PDS via `com.atproto.repo.uploadBlob`. Kevara holds only the cryptographic blob reference (CID), not the image data itself. The blob is served directly from the user's PDS host, ensuring the user retains full ownership of their portfolio media.
+
+**Example record**
+
+```json
+{
+	"$type": "is.kevara.portfolio.item",
+	"title": "Kevara — Sovereign Professional Identity",
+	"description": "A portable professional trust portfolio built natively on AT Protocol.",
+	"uri": "https://kevara.co",
+	"techStack": ["Next.js", "AT Protocol", "Ozone", "Tailwind CSS"],
+	"layoutHint": "featured",
+	"createdAt": "2026-05-01T00:00:00.000Z"
+}
+```
+
+---
+
+### `is.kevara.networks`
+
+Stores the connected social network handle records for cross-network identity display.
+
+**Record key:** singleton  
+**Written by:** Kevara settings (Profile Sync flow)  
+**Read by:** Kevara cross-network verification panel, public profile
+
+| Field      | Type          | Required | Description                        |
+| ---------- | ------------- | -------- | ---------------------------------- |
+| `accounts` | array[object] | yes      | All connected AT Protocol accounts |
+
+**Account object**
+
+| Field     | Type              | Description                      |
+| --------- | ----------------- | -------------------------------- |
+| `did`     | string (did)      | DID of the account               |
+| `handle`  | string            | AT Protocol handle               |
+| `network` | string            | Network identifier               |
+| `pdsHost` | string (uri)      | PDS host URL for blob resolution |
+| `addedAt` | string (datetime) | ISO 8601 timestamp               |
+
+---
+
+### `is.kevara.embassy.theme`
+
+Stores the user's visual configuration for their Digital Embassy display layer.
+
+**Record key:** singleton  
+**Written by:** Kevara appearance settings  
+**Read by:** Kevara profile renderer
+
+| Field          | Type   | Required | Description                                  |
+| -------------- | ------ | -------- | -------------------------------------------- |
+| `layoutMode`   | string | no       | Known values: `editorial`, `grid`, `minimal` |
+| `primaryColor` | string | no       | Hex colour override for accent elements      |
+| `accentColor`  | string | no       | Hex colour override for trust indicators     |
+
+**Note:** Layout mode and colour overrides are Sovereign Pro features. Free accounts render in the default Kevara editorial layout.
+
+---
+
+### `is.kevara.endorsement` _(specified, not yet live)_
+
+<Note>
+	This lexicon is specified and planned for a future release. It is not
+	currently written or read by the Kevara application.
+</Note>
+
+A Kevara-native endorsement record that will supplement `id.sifa.endorsement` with richer metadata and Trust Gateway integration.
+
+| Field               | Type              | Required | Description                                                  |
+| ------------------- | ----------------- | -------- | ------------------------------------------------------------ |
+| `subject`           | string (did)      | yes      | DID of the person being endorsed                             |
+| `skill`             | string            | yes      | Specific skill or competency                                 |
+| `credentialContext` | string (uri)      | no       | Link to a relevant W3C VC or Open Badge supporting the claim |
+| `relationship`      | string            | no       | Endorser's relationship to subject                           |
+| `note`              | string            | no       | Endorsement note (max 300 chars)                             |
+| `createdAt`         | string (datetime) | yes      | ISO 8601 timestamp                                           |
+
+---
+
+## Reading Records via XRPC
+
+Any AT Protocol client can read Kevara lexicon records from a user's PDS without authentication. The standard XRPC call is:
+
+```http
+GET {pds-host}/xrpc/com.atproto.repo.getRecord
+  ?repo={did}
+  &collection={lexicon-id}
+  &rkey={record-key}
+```
+
+**Example: reading a user's link page**
+
+```http
+GET https://bsky.social/xrpc/com.atproto.repo.getRecord
+  ?repo=did:plc:example
+  &collection=is.kevara.linkpage
+  &rkey=self
+```
+
+**Example: listing all portfolio items**
+
+```http
+GET https://bsky.social/xrpc/com.atproto.repo.listRecords
+  ?repo=did:plc:example
+  &collection=is.kevara.portfolio.item
+  &limit=50
+```
+
+The PDS host for any DID can be resolved via the PLC directory:
+
+```http
+GET https://plc.directory/{did}
+```
+
+The `service` array in the response contains the PDS endpoint.
+
+---
+
+## Blob Resolution
+
+Portfolio images and other media assets are stored as blobs on the user's PDS. To construct a blob URL from a record reference:
+
+```
+{pds-host}/xrpc/com.atproto.sync.getBlob?did={did}&cid={blob-cid}
+```
+
+Kevara's `blobUrl()` helper in `lib/atproto.js` constructs this automatically from any blob ref, using the `pdsHost` stored alongside the record.
+
+---
+
+## Versioning and Stability
+
+| Lexicon                    | Status  | Notes                                 |
+| -------------------------- | ------- | ------------------------------------- |
+| `id.sifa.profile`          | Stable  | Open standard, versioned by SIFA      |
+| `id.sifa.position`         | Stable  | Open standard, versioned by SIFA      |
+| `id.sifa.education`        | Stable  | Open standard, versioned by SIFA      |
+| `id.sifa.endorsement`      | Stable  | Open standard, versioned by SIFA      |
+| `id.sifa.graph.follow`     | Stable  | Open standard, versioned by SIFA      |
+| `is.kevara.linkpage`       | Stable  | Active, written by current Kevara app |
+| `is.kevara.portfolio.item` | Stable  | Active, Sovereign Pro feature         |
+| `is.kevara.networks`       | Stable  | Active, written by Profile Sync       |
+| `is.kevara.embassy.theme`  | Stable  | Active, appearance settings           |
+| `is.kevara.endorsement`    | Planned | Not yet implemented                   |
+
+Publishing a lexicon implies a stability commitment. Kevara will not make breaking changes to a stable `is.kevara.*` schema without a major version increment and a minimum 90-day migration window. Additive fields (new optional properties) are non-breaking and may be added at any time.
+
+---
+
+## Data Sovereignty Notice
+
+All records in both namespaces are stored exclusively on the user's Personal Data Server. Kevara is a stateless display layer. It reads from and writes to the user's PDS via authenticated XRPC calls. No record data is stored on Kevara infrastructure.
+
+Users can export all Kevara-associated records at any time via **Settings → Data & Export**. Disconnecting a PDS account removes Kevara's access instantly. The records themselves remain on the PDS under the user's full control.

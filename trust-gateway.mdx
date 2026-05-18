@@ -1,0 +1,322 @@
+---
+title: Trust Gateway
+description: Kevara's stateless professional credential verification layer for the open web.
+---
+
+# Trust Gateway
+
+The Kevara Trust Gateway is a stateless verification layer that translates cryptographically signed professional credentials into machine-readable trust signals. It does not store credential data. It does not act as an issuer of record. It sits between the fragmented world of professional credential standards and the AT Protocol identity layer, making verified professional trust portable, discoverable, and visually authoritative.
+
+**Base URL:** `https://trust.kevara.co`
+
+---
+
+## Architecture Principles
+
+The Trust Gateway is designed around four non-negotiable constraints that flow directly from Kevara's zero-database architecture.
+
+**No central storage.** Credential data lives on the user's Personal Data Server (PDS). The gateway reads, verifies, and translates. It never persists.
+
+**Label over record.** Trust signals are expressed as cryptographically signed Ozone labels issued by the Kevara Labeler (`did:plc:upeagalqts3yutsgc6vo5tn3`), not as self-asserted PDS records. This means a Kevara-verified signal is tamper-proof and portable across any AT Protocol client that subscribes to the labeler.
+
+**Open standards at every layer.** The gateway speaks Open Badges 3.0, W3C Verifiable Credentials Data Model 2.0, CLR 2.0, OID4VCI, and OID4VP. Institutional issuers and enterprise verifiers interact with standards they already know.
+
+**Sovereignty first.** Users control what is disclosed, for how long, and to whom. The gateway facilitates selective disclosure. It does not aggregate or profile.
+
+---
+
+## Trust Stack
+
+The gateway operates as the orchestration layer across three distinct protocol surfaces.
+
+| Layer | Standard | Role |
+|---|---|---|
+| Cryptographic proof | W3C VC DM 2.0 | Foundational credential integrity |
+| Educational and work credentials | Open Badges 3.0 | Portable achievement records |
+| Longitudinal career records | CLR 2.0 | Structured career history |
+| Credential issuance transport | OID4VCI | Issuer to wallet delivery |
+| Credential presentation transport | OID4VP | Wallet to verifier presentation |
+| Social portability and distribution | AT Protocol | Professional identity portability |
+| Trust orchestration and UX | Kevara | Editorial trust layer |
+
+Kevara does not compete with issuers (universities, certification bodies, professional associations) or verifiers (HR platforms, ATS systems, regulated industry portals). It sits above them as the connective tissue that makes fragmented standards actually usable.
+
+---
+
+## Label Vocabulary
+
+The Kevara Labeler issues cryptographically signed labels against AT Protocol DIDs. Labels are queryable by any AT Protocol client that subscribes to the labeler. They propagate across Bluesky, Gander, EuroSky, and any compliant AT Protocol network.
+
+**Labeler DID:** `did:plc:upeagalqts3yutsgc6vo5tn3`
+**Labeler endpoint:** `https://labeler.kevara.app`
+
+### Labels
+
+| Label | Meaning | Trigger | Visible In |
+|---|---|---|---|
+| `kevara-verified` | Identity verified by Kevara | Manual review via Keytrace flow | Kevara + any subscribing AT Protocol client |
+| `kevara-pro` | Active Sovereign Pro subscriber | Subscription grant / removed on lapse | Kevara UI |
+| `kevara-gander` | Gander network participant | Gander ecosystem onboarding | Gander clients |
+| `kevara-eurosky` | EuroSky network participant | EuroSky ecosystem onboarding | EuroSky clients |
+| `kevara-recruiter` | Verified recruiter or employer | Manual review | Kevara directory |
+
+### Querying Labels
+
+Any system can query current labels for a DID without authentication.
+
+```http
+GET https://labeler.kevara.app/xrpc/com.atproto.label.queryLabels?subjects={did}
+```
+
+**Response**
+
+```json
+{
+  "labels": [
+    {
+      "src": "did:plc:upeagalqts3yutsgc6vo5tn3",
+      "uri": "did:plc:user-did-here",
+      "val": "kevara-verified",
+      "cts": "2026-05-01T00:00:00.000Z",
+      "neg": false
+    }
+  ]
+}
+```
+
+A `neg: true` entry means the label has been revoked. Clients should filter these out. The Kevara frontend library (`lib/labels.js`) handles this automatically.
+
+### Subscribing to the Labeler
+
+Real-time label updates are available via WebSocket.
+
+```http
+wss://labeler.kevara.app/xrpc/com.atproto.label.subscribeLabels
+```
+
+This stream emits label events as they are applied or negated. Enterprise verifiers and third-party AT Protocol clients can subscribe to maintain live trust state without polling.
+
+---
+
+## Verification Flow
+
+<Note>
+  The verification flows described in this section are **specified but not yet implemented**. They represent the Trust Gateway roadmap. The label query and subscription endpoints above are live.
+</Note>
+
+### OID4VP Presentation Flow
+
+The OID4VP (OpenID for Verifiable Presentations) flow allows an external verifier (HR platform, ATS, regulated industry portal, grant system) to request proof of a professional credential held in a user's AT Protocol PDS.
+
+**Step 1 — Verifier initiates a presentation request**
+
+```http
+POST https://trust.kevara.co/v1/verify/request
+Content-Type: application/json
+
+{
+  "verifier_did": "did:plc:verifier-did",
+  "requested_credentials": ["OpenBadge", "CLRCredential"],
+  "purpose": "employment_verification",
+  "expires_in": 172800
+}
+```
+
+`expires_in` is in seconds. The example above creates a 48-hour verification window. After expiry, the presentation link is invalidated and no further credential data can be accessed via this request.
+
+**Step 2 — Gateway returns a presentation URI**
+
+```json
+{
+  "presentation_uri": "https://trust.kevara.co/v1/verify/present/{request_id}",
+  "request_id": "req_abc123",
+  "expires_at": "2026-05-20T00:00:00.000Z",
+  "qr_code_url": "https://trust.kevara.co/v1/verify/qr/{request_id}"
+}
+```
+
+The user receives this URI via their Kevara profile and chooses whether to fulfil it.
+
+**Step 3 — User selects credentials for disclosure**
+
+The user's Kevara interface presents a selective disclosure screen. They choose which credentials to include in the presentation. Nothing is transmitted until explicit confirmation.
+
+**Step 4 — Gateway assembles and returns a Verifiable Presentation**
+
+```json
+{
+  "@context": ["https://www.w3.org/2018/credentials/v1"],
+  "type": ["VerifiablePresentation"],
+  "verifiableCredential": [
+    {
+      "type": ["VerifiableCredential", "OpenBadgeCredential"],
+      "issuer": "did:plc:issuer-institution-did",
+      "credentialSubject": {
+        "id": "did:plc:user-did",
+        "achievement": {
+          "name": "AWS Solutions Architect",
+          "description": "...",
+          "criteria": "..."
+        }
+      },
+      "proof": { }
+    }
+  ]
+}
+```
+
+**Step 5 — Verifier checks the response**
+
+```http
+GET https://trust.kevara.co/v1/verify/result/{request_id}
+Authorization: Bearer {verifier_token}
+```
+
+```json
+{
+  "status": "verified",
+  "subject_did": "did:plc:user-did",
+  "credentials_presented": ["OpenBadgeCredential"],
+  "kevara_labels": ["kevara-verified"],
+  "verified_at": "2026-05-18T12:00:00.000Z",
+  "expires_at": "2026-05-20T00:00:00.000Z"
+}
+```
+
+Possible `status` values: `verified`, `pending`, `expired`, `revoked`, `rejected`.
+
+---
+
+## Issuer Integration
+
+<Note>
+  Issuer integration endpoints are **specified but not yet implemented**. This section describes the planned Open Badges 3.0 and CLR 2.0 issuance surface.
+</Note>
+
+### Open Badges 3.0 Issuance
+
+Credential issuers (universities, professional certification bodies, membership organisations) can deliver Open Badges 3.0 credentials directly to a recipient's AT Protocol DID via the OID4VCI flow.
+
+```http
+POST https://trust.kevara.co/v1/issue/badge
+Content-Type: application/json
+Authorization: Bearer {issuer_api_key}
+
+{
+  "recipient_did": "did:plc:user-did",
+  "badge": {
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+      "https://purl.imsglobal.org/spec/ob/v3p0/context.json"
+    ],
+    "type": ["VerifiableCredential", "OpenBadgeCredential"],
+    "issuer": {
+      "id": "did:plc:issuer-institution-did",
+      "type": "Profile",
+      "name": "Institution Name"
+    },
+    "credentialSubject": {
+      "type": "AchievementSubject",
+      "achievement": {
+        "id": "https://example.edu/badges/aws-architect",
+        "type": "Achievement",
+        "name": "AWS Solutions Architect",
+        "description": "...",
+        "criteria": { "narrative": "..." }
+      }
+    }
+  }
+}
+```
+
+On receipt, Kevara writes the credential as a blob to the user's PDS, links it to their `is.kevara.portfolio` record, and queues it for Ozone validation.
+
+### CLR 2.0 Record Linking
+
+Comprehensive Learner Records covering longitudinal career and education history can be linked to a Kevara profile via the CLR 2.0 standard. The gateway maps CLR achievement records to `id.sifa.*` lexicon fields for AT Protocol portability.
+
+### Revocation Webhooks
+
+Issuers can notify the Trust Gateway when a credential's status changes (expiry, revocation, suspension) via a signed webhook.
+
+```http
+POST https://trust.kevara.co/v1/webhooks/revoke
+Content-Type: application/json
+X-Issuer-Signature: {hmac_signature}
+
+{
+  "credential_id": "https://example.edu/credentials/abc123",
+  "recipient_did": "did:plc:user-did",
+  "reason": "certification_expired",
+  "effective_at": "2026-05-01T00:00:00.000Z"
+}
+```
+
+On receipt, the gateway triggers a revocation assessment in the Ozone engine. If the credential was used as the basis for a `kevara-verified` label, the label is downgraded and the profile trust state is recalculated.
+
+---
+
+## Revocation and Credential Freshness
+
+Trust signals degrade when the credentials underlying them change state. The Trust Gateway maintains revocation awareness at two levels.
+
+**Subscription-level revocation** is live. When a Sovereign Pro subscription lapses, the `kevara-pro` Ozone label is negated automatically via `lib/labels-server.js`. Any client querying the labeler will see the updated state within seconds.
+
+**Credential-level revocation** is part of the Phase 2 roadmap. When implemented, the Ozone engine will monitor credential freshness, check issuer revocation registries, and dynamically downgrade trust indicators for stale or revoked credentials. Verifiers consuming Trust Gateway responses will always receive a `status` field that reflects current revocation state, not the state at time of issuance.
+
+---
+
+## Selective Disclosure and Privacy
+
+The Trust Gateway implements selective disclosure following the DIF Presentation Exchange specification. Users never expose a full credential record to a verifier. They expose only the specific claims required to satisfy a verification request.
+
+Disclosure bundles are ephemeral. They expire. They are not stored by Kevara. The user's PDS remains the single source of truth for all credential data.
+
+Audience-specific views are supported. A user can create a presentation that exposes employment verification claims to a recruiter while keeping education records and certification details private.
+
+---
+
+## Ecosystem Alignment
+
+The Trust Gateway is designed for forward compatibility with regional trust frameworks.
+
+**European alignment.** The gateway architecture maps to EBSI (European Blockchain Services Infrastructure), ESSIF, and eIDAS 2.0 wallet requirements. EuroSky users operating under European data sovereignty constraints can use the Trust Gateway with confidence that the architecture is compatible with emerging regulatory requirements.
+
+**Canadian alignment.** Gander network participants benefit from infrastructure hosted on Oracle Cloud Canada A1, ensuring data residency compliance for Canadian professionals in regulated industries.
+
+**HR and ATS interoperability.** External HR systems, applicant tracking platforms, and background verification services can integrate via the OID4VP verification flow without requiring any Kevara-specific SDK or proprietary integration.
+
+---
+
+## Versioning
+
+This specification is versioned. Breaking changes will increment the major version in the API path (`/v1/`, `/v2/`). Additive changes are non-breaking. The changelog below tracks all revisions.
+
+| Version | Date | Notes |
+|---|---|---|
+| 0.1.0 | 2026-05-18 | Initial public specification. Label query and subscription endpoints live. Verification and issuance flows specified, not yet implemented. |
+
+---
+
+## What Is Live vs. Roadmap
+
+To be explicit about current state:
+
+**Live today**
+- Ozone labeler at `labeler.kevara.app`
+- Label vocabulary: `kevara-verified`, `kevara-pro`, `kevara-gander`, `kevara-eurosky`, `kevara-recruiter`
+- Public label query via `com.atproto.label.queryLabels`
+- WebSocket label subscription via `com.atproto.label.subscribeLabels`
+- Subscription-level revocation (Pro lapse negates `kevara-pro` label automatically)
+- Kevara profile trust signal rendering from live labels
+
+**Specified, not yet built**
+- OID4VP presentation flow
+- Open Badges 3.0 issuance endpoint
+- CLR 2.0 record linking
+- Issuer API and webhook infrastructure
+- Credential-level revocation monitoring
+- Selective disclosure UI
+- Enterprise verifier token system
+
+If you are an institution or enterprise verifier interested in early integration, reach out at [trust@kevara.co](mailto:trust@kevara.co).
