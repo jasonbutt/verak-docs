@@ -5,6 +5,78 @@ description: A versioned record of changes to Kevara's public APIs, lexicons, an
 
 # Changelog
 
+## 0.1.401-beta — May 2026
+
+**Discovery Directory**
+- New lexicon published: `is.kevara.directory.public` — members write this record to their own PDS to opt in to the Kevara Discovery Directory
+- Record fields: `optedIn`, `includeInGlobal`, `headline` (120 char max), `roleCategory`, `createdAt`, `updatedAt`
+- New API: `GET /api/directory/public` — reads the authenticated user's directory record from their PDS
+- New API: `PUT /api/directory/public` — writes the record to the user's PDS; maintains `directory:index` Redis set and per-DID field cache automatically
+- New API: `GET /api/directory/index` — returns enriched member cards filtered by `region`, `category`, `verified`, and `planet`; results cached in Redis for 60 seconds
+- Region detection from AT Protocol handle TLD: `.gander.ca` / `gander.social` → `ca`, `.eurosky.social` → `eu`, all others → `global`
+- Members with `includeInGlobal: true` appear in the global directory regardless of their home network
+- Results sorted: Pro members first, then verified, then alphabetical
+- New page: `/discover` — public directory browsable without login; region tabs, category chips, Verified only and In a Planet filter toggles; filters sync to URL query params
+- New component: `DirectoryMemberCard` — avatar with gold ring for verified members, headline, role chip, planet badges, spring hover animation, gold left border for Pro members
+- Settings > Discovery Directory section added — opt-in toggle, global directory toggle, headline input, role category select, save with success/error feedback
+- "Discover" added to main navigation between Orbits and Profile
+
+---
+
+## 0.1.2-beta — May 2026
+
+**Feed**
+- Feed filter bar introduced: Orbits (default) / Planets / Satellites / All
+- Planets feed tab now pulls subscribed planets from PDS on load; falls back to localStorage cache
+- Viewer like/repost state now resolved via `com.atproto.repo.listRecords` against the authenticated user's own repo — fixes stale state on Orbits, Planets, and Satellites feeds across Gander and EuroSky PDSes
+- Rich text rendering added to feed and thread views: AT Protocol UTF-8 byte-offset facets rendered as live links, `@mentions`, and `#hashtags`
+- Reply context indicator: replies to other accounts show "Replying to @handle" inline
+- Inline reply character counter: turns KV Gold below 30 chars, red when over limit
+- Auto infinite scroll via `IntersectionObserver` sentinel; manual "Load more" button retained as fallback
+- Embed renderers added: images (1–4 grid), external link cards, quoted posts (depth-limited to 1), `recordWithMedia`
+
+**Planets**
+- Planets tab filter pills: All / Joined · N / Tech / Legal / Finance / Creative / Science
+- Subscribed planets float to top of "All" view under a dedicated "Joined Planets" section
+- `PlanetCard` now reflects subscription state — green border and "Joined ✓" badge when subscribed
+- Planets ownership notice updated to "Managed by Kevara.app"; DID-hardcoded check replaced with `isCurator` prop driven by `KEVARA_CURATOR_DID` env var
+- Subscribed planet nodes appear on the Orbit Map with ringed ellipses, category colour, and member panel on click
+
+**Profile — Articles section**
+- `WritingFeed` applies `hiddenNetworks` filter to pinned items, rest items, and platform pills
+- Article cards: platform logo used as blurred background fill when no thumbnail is present
+- Carousel: cards rendered at equal height; native scrollbar replaced with `‹ / ›` arrow buttons
+- `ActivityHeatmap` accepts `hiddenNetworks` prop; all derived stats, bars, legend, and tooltips exclude hidden networks
+- Fixed `Cannot access before initialization` error caused by out-of-order `useMemo` declarations
+
+**Admin**
+- Analytics tab added to admin panel: time-range picker, 5 KPI tiles with period deltas, growth bar chart, credibility tier distribution, broadcast queue panel
+- Members and Verification tabs upgraded with Bluesky typeahead lookahead search (250 ms debounce)
+- Credibility tab header stats now show Total Scored / Authority / Sovereign / Avg Score when active
+- `CredibilityTierPill` derives label exclusively from `score.tier`; never reads from `labels` array
+
+**Firehose Service**
+- Standalone Node.js worker deployed to Railway (`kevara-firehose`)
+- Connects to AT Protocol relay (`wss://bsky.network`) filtering Kevara/Sifa lexicon events
+- Connects to Ozone label stream (`wss://labeler.kevara.app`)
+- Writes Redis KPI counters (`kpi:{metric}:{date}`, 90-day TTL) and enqueues post jobs
+
+**Verification**
+- Settings verification status now checks both the Redis verification record and `labeler.kevara.app` directly; manually granted `kevara-verified` labels surface correctly
+- Ozone label display name updated: `kevara-verified` → `Kevara Verified`
+
+**Brand**
+- Colour palette entry renamed: `Gander Gold` → `KV Gold` (`#E6B325` unchanged)
+- All references to "Gander Gold verification" updated to "KV Gold verification" across app copy and admin panel
+
+**Bug fixes**
+- Duplicate React key warning in Live Activity feed resolved by deduplicating merged posts by `post.uri` before render
+- `isNetworkHidden` and `isNetworkVisible` both now use `articleNetworkKey()` consistently
+- `clearAll()` in `AtProtoContext` is now a hard clear — eliminates previous user's profile bleeding through on new login
+- XRPC proxy now routes `app.bsky.*` queries to `public.api.bsky.app` directly; fixes "Method Not Implemented" errors
+
+---
+
 ## 0.1.0 — May 2026
 
 **Trust Gateway**

@@ -7,8 +7,6 @@ description: Kevara's stateless professional credential verification layer for t
 
 The Kevara Trust Gateway is a stateless verification layer that translates cryptographically signed professional credentials into machine-readable trust signals. It does not store credential data. It does not act as an issuer of record. It sits between the fragmented world of professional credential standards and the AT Protocol identity layer, making verified professional trust portable, discoverable, and visually authoritative.
 
-**Base URL:** `https://trust.kevara.co`
-
 ---
 
 ## Architecture Principles
@@ -39,7 +37,7 @@ The gateway operates as the orchestration layer across three distinct protocol s
 | Social portability and distribution | AT Protocol | Professional identity portability |
 | Trust orchestration and UX | Kevara | Editorial trust layer |
 
-Kevara does not compete with issuers (universities, certification bodies, professional associations) or verifiers (HR platforms, ATS systems, regulated industry portals). It sits above them as the connective tissue that makes fragmented standards actually usable.
+Kevara does not compete with issuers (universities, certification bodies, professional associations) or verifiers (HR platforms, ATS systems, regulated industry portals). Its intent is to sit above them as the connective tissue that makes fragmented standards actually usable.
 
 ---
 
@@ -48,13 +46,14 @@ Kevara does not compete with issuers (universities, certification bodies, profes
 The Kevara Labeler issues cryptographically signed labels against AT Protocol DIDs. Labels are queryable by any AT Protocol client that subscribes to the labeler. They propagate across Bluesky, Gander, EuroSky, and any compliant AT Protocol network.
 
 **Labeler DID:** `did:plc:upeagalqts3yutsgc6vo5tn3`
+
 **Labeler endpoint:** `https://labeler.kevara.app`
 
 ### Labels
 
 | Label | Meaning | Trigger | Visible In |
 |---|---|---|---|
-| `kevara-verified` | Identity verified by Kevara | Manual review via Keytrace flow | Kevara + any subscribing AT Protocol client |
+| `kevara-verified` | Identity verified by Kevara | Manual review (future Keytrace flow) | Kevara + any subscribing AT Protocol client |
 | `kevara-pro` | Active Sovereign Pro subscriber | Subscription grant / removed on lapse | Kevara UI |
 | `kevara-gander` | Gander network participant | Gander ecosystem onboarding | Gander clients |
 | `kevara-eurosky` | EuroSky network participant | EuroSky ecosystem onboarding | EuroSky clients |
@@ -111,7 +110,7 @@ The OID4VP (OpenID for Verifiable Presentations) flow allows an external verifie
 **Step 1 — Verifier initiates a presentation request**
 
 ```http
-POST https://trust.kevara.co/v1/verify/request
+POST https://trust.kevara.app/v1/verify/request
 Content-Type: application/json
 
 {
@@ -128,10 +127,10 @@ Content-Type: application/json
 
 ```json
 {
-  "presentation_uri": "https://trust.kevara.co/v1/verify/present/{request_id}",
+  "presentation_uri": "https://trust.kevara.app/v1/verify/present/{request_id}",
   "request_id": "req_abc123",
   "expires_at": "2026-05-20T00:00:00.000Z",
-  "qr_code_url": "https://trust.kevara.co/v1/verify/qr/{request_id}"
+  "qr_code_url": "https://trust.kevara.app/v1/verify/qr/{request_id}"
 }
 ```
 
@@ -168,7 +167,7 @@ The user's Kevara interface presents a selective disclosure screen. They choose 
 **Step 5 — Verifier checks the response**
 
 ```http
-GET https://trust.kevara.co/v1/verify/result/{request_id}
+GET https://trust.kevara.app/v1/verify/result/{request_id}
 Authorization: Bearer {verifier_token}
 ```
 
@@ -198,7 +197,7 @@ Possible `status` values: `verified`, `pending`, `expired`, `revoked`, `rejected
 Credential issuers (universities, professional certification bodies, membership organisations) can deliver Open Badges 3.0 credentials directly to a recipient's AT Protocol DID via the OID4VCI flow.
 
 ```http
-POST https://trust.kevara.co/v1/issue/badge
+POST https://trust.kevara.app/v1/issue/badge
 Content-Type: application/json
 Authorization: Bearer {issuer_api_key}
 
@@ -240,7 +239,7 @@ Comprehensive Learner Records covering longitudinal career and education history
 Issuers can notify the Trust Gateway when a credential's status changes (expiry, revocation, suspension) via a signed webhook.
 
 ```http
-POST https://trust.kevara.co/v1/webhooks/revoke
+POST https://trust.kevara.app/v1/webhooks/revoke
 Content-Type: application/json
 X-Issuer-Signature: {hmac_signature}
 
@@ -319,4 +318,4 @@ To be explicit about current state:
 - Selective disclosure UI
 - Enterprise verifier token system
 
-If you are an institution or enterprise verifier interested in early integration, reach out at [trust@kevara.co](mailto:trust@kevara.co).
+If you are an institution or enterprise verifier interested in early integration, reach out at [support@kevara.app](mailto:support@kevara.app).
