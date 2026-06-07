@@ -1,25 +1,25 @@
 ---
 title: Lexicon Reference
-description: The complete schema reference for all AT Protocol lexicons used by Kevara, covering both the open SIFA standard and Kevara's own sovereign namespace.
+description: The complete schema reference for all AT Protocol lexicons used by Verak, covering both the open SIFA standard and Verak's own sovereign namespace.
 ---
 
 # Lexicon Reference
 
-Kevara operates across two distinct lexicon namespaces. Understanding the difference matters both for interoperability and for the sovereignty guarantee.
+Verak operates across two distinct lexicon namespaces. Understanding the difference matters both for interoperability and for the sovereignty guarantee.
 
-**`id.sifa.*`** is an open professional data standard that Kevara implements. These schemas are not owned by Kevara. Any AT Protocol application can read and write SIFA records, which is exactly the point. Your career history, education, and professional graph written via Kevara are readable by any compliant app in the ecosystem.
+**`id.sifa.*`** is an open professional data standard that Verak implements. These schemas are not owned by Verak. Any AT Protocol application can read and write SIFA records, which is exactly the point. Your career history, education, and professional graph written via Verak are readable by any compliant app in the ecosystem.
 
-**`is.kevara.*`** is Kevara's own namespace. These schemas cover the portfolio presentation layer, link page configuration, network identity, and verification state. They are published and versioned by Kevara. Third-party AT Protocol clients can read these records to render Kevara profile data wherever a user's DID appears.
+**`is.verak.*`** is Verak's own namespace. These schemas cover the portfolio presentation layer, link page configuration, network identity, and verification state. They are published and versioned by Verak. Third-party AT Protocol clients can read these records to render Verak profile data wherever a user's DID appears.
 
-All records in both namespaces are stored exclusively on the user's Personal Data Server (PDS). Kevara holds no copies.
+All records in both namespaces are stored exclusively on the user's Personal Data Server (PDS). Verak holds no copies.
 
 ---
 
 ## The SIFA Standard (`id.sifa.*`)
 
-The [SIFA Standard](https://sifa.id) is an open lexicon specification for portable professional identity on AT Protocol. Kevara implements SIFA as the authoritative schema for all resume-grade career data. The primary account is always the SIFA write authority; secondary connected accounts contribute network reach and activity but do not maintain independent SIFA records.
+The [SIFA Standard](https://sifa.id) is an open lexicon specification for portable professional identity on AT Protocol. Verak implements SIFA as the authoritative schema for all resume-grade career data. The primary account is always the SIFA write authority; secondary connected accounts contribute network reach and activity but do not maintain independent SIFA records.
 
-The following documents the SIFA lexicons Kevara currently reads and writes. For the canonical SIFA specification, refer to the SIFA Standard documentation.
+The following documents the SIFA lexicons Verak currently reads and writes. For the canonical SIFA specification, refer to the SIFA Standard documentation.
 
 ---
 
@@ -29,7 +29,7 @@ The base professional profile record. Extends `app.bsky.actor.profile` with stru
 
 **Record key:** singleton (one per account)  
 **Written by:** Primary account only  
-**Read by:** Kevara profile renderer, any SIFA-compliant app
+**Read by:** Verak profile renderer, any SIFA-compliant app
 
 | Field         | Type          | Required | Description                                                      |
 | ------------- | ------------- | -------- | ---------------------------------------------------------------- |
@@ -60,7 +60,7 @@ A single employment or contract position. Multiple records build the career time
 
 **Record key:** tid (timestamp-based, ordered)  
 **Written by:** Primary account  
-**Read by:** Kevara career timeline, any SIFA-compliant app
+**Read by:** Verak career timeline, any SIFA-compliant app
 
 | Field             | Type         | Required | Description                                                                  |
 | ----------------- | ------------ | -------- | ---------------------------------------------------------------------------- |
@@ -94,7 +94,7 @@ A single education record. Covers formal degrees, diplomas, bootcamps, and self-
 
 **Record key:** tid  
 **Written by:** Primary account  
-**Read by:** Kevara education section, any SIFA-compliant app
+**Read by:** Verak education section, any SIFA-compliant app
 
 | Field            | Type         | Required | Description                                  |
 | ---------------- | ------------ | -------- | -------------------------------------------- |
@@ -114,7 +114,7 @@ A peer-to-peer signed skill endorsement. Written to the **endorsing user's own P
 
 **Record key:** tid  
 **Written by:** The endorsing user (to their own PDS)  
-**Read by:** Kevara trust display, endorsement aggregators
+**Read by:** Verak trust display, endorsement aggregators
 
 | Field          | Type              | Required | Description                                                     |
 | -------------- | ----------------- | -------- | --------------------------------------------------------------- |
@@ -124,9 +124,9 @@ A peer-to-peer signed skill endorsement. Written to the **endorsing user's own P
 | `note`         | string            | no       | Optional endorsement note (max 300 chars)                       |
 | `createdAt`    | string (datetime) | yes      | ISO 8601 timestamp                                              |
 
-**How Kevara renders endorsements**
+**How Verak renders endorsements**
 
-Kevara only surfaces endorsements from DIDs that carry a `kevara-verified` Ozone label. This prevents low-signal or bot endorsements from appearing as meaningful trust indicators. The endorsement record stays on the endorser's PDS permanently. The subject has no ability to delete it, which is intentional: the endorsement belongs to the person who gave it.
+Verak only surfaces endorsements from DIDs that carry a `verak-verified` Ozone label. This prevents low-signal or bot endorsements from appearing as meaningful trust indicators. The endorsement record stays on the endorser's PDS permanently. The subject has no ability to delete it, which is intentional: the endorsement belongs to the person who gave it.
 
 **Example record**
 
@@ -149,32 +149,32 @@ A professional inner circle connection. Distinct from a standard Bluesky social 
 
 **Record key:** tid  
 **Written by:** The connecting user (to their own PDS)  
-**Read by:** Kevara Orbits view, professional graph tools
+**Read by:** Verak Orbits view, professional graph tools
 
 | Field       | Type              | Required | Description                             |
 | ----------- | ----------------- | -------- | --------------------------------------- |
 | `subject`   | string (did)      | yes      | DID of the professional being connected |
 | `createdAt` | string (datetime) | yes      | ISO 8601 timestamp                      |
 
-**Note on Kevara's implementation**
+**Note on Verak's implementation**
 
-Kevara's Orbits feature reads `id.sifa.graph.follow` records across all connected accounts, deduplicates by DID, and merges into a unified professional network view. Connections are always written to the primary account's PDS only, regardless of which account surface the connection was initiated from.
-
----
-
-## Kevara Lexicons (`is.kevara.*`)
-
-These are Kevara's own schemas, owned and versioned by Kevara. They cover the presentation and portfolio layer that sits above the SIFA data foundation. Third-party AT Protocol clients may read these records to render Kevara profile data wherever a user's DID appears.
+Verak's Orbits feature reads `id.sifa.graph.follow` records across all connected accounts, deduplicates by DID, and merges into a unified professional network view. Connections are always written to the primary account's PDS only, regardless of which account surface the connection was initiated from.
 
 ---
 
-### `is.kevara.linkpage`
+## Verak Lexicons (`is.verak.*`)
 
-The primary Kevara profile configuration record. Holds link page content, article display preferences, multi-network account links, and publication connections. One record per account; updated in place.
+These are Verak's own schemas, owned and versioned by Verak. They cover the presentation and portfolio layer that sits above the SIFA data foundation. Third-party AT Protocol clients may read these records to render Verak profile data wherever a user's DID appears.
+
+---
+
+### `is.verak.linkpage`
+
+The primary Verak profile configuration record. Holds link page content, article display preferences, multi-network account links, and publication connections. One record per account; updated in place.
 
 **Record key:** singleton  
-**Written by:** Kevara application (owner authenticated)  
-**Read by:** Kevara profile renderer, cross-network discovery
+**Written by:** Verak application (owner authenticated)  
+**Read by:** Verak profile renderer, cross-network discovery
 
 | Field            | Type              | Required | Description                                            |
 | ---------------- | ----------------- | -------- | ------------------------------------------------------ |
@@ -192,7 +192,7 @@ The primary Kevara profile configuration record. Holds link page content, articl
 | `title`       | string       | Display label                                      |
 | `url`         | string (uri) | Destination URL                                    |
 | `description` | string       | Optional subtitle (max 120 chars)                  |
-| `verified`    | boolean      | Whether the URL has been domain-verified by Kevara |
+| `verified`    | boolean      | Whether the URL has been domain-verified by Verak |
 | `featured`    | boolean      | Whether to render as a featured (larger) card      |
 | `hidden`      | boolean      | Owner can hide without deleting                    |
 
@@ -213,17 +213,17 @@ The primary Kevara profile configuration record. Holds link page content, articl
 | `pinned` | array[string] | Article URIs pinned to top                     |
 | `hidden` | array[string] | Article URIs hidden from public display        |
 
-**Important:** The `linkedAccounts` field is what powers the cross-network verification panel on public profiles. When an owner views their own profile, Kevara syncs their connected accounts into this field, making their multi-network presence publicly discoverable without any central database. Profile visitors read this field directly from the PDS.
+**Important:** The `linkedAccounts` field is what powers the cross-network verification panel on public profiles. When an owner views their own profile, Verak syncs their connected accounts into this field, making their multi-network presence publicly discoverable without any central database. Profile visitors read this field directly from the PDS.
 
 ---
 
-### `is.kevara.portfolio.item`
+### `is.verak.portfolio.item`
 
 A high-fidelity project or work sample card. Extends SIFA position records with editorial-grade presentation metadata, media, and tech stack information.
 
 **Record key:** tid  
-**Written by:** Kevara application (Sovereign Pro feature)  
-**Read by:** Kevara portfolio renderer, third-party AT Protocol clients
+**Written by:** Verak application (Sovereign Pro feature)  
+**Read by:** Verak portfolio renderer, third-party AT Protocol clients
 
 | Field                  | Type              | Required | Description                                          |
 | ---------------------- | ----------------- | -------- | ---------------------------------------------------- |
@@ -238,16 +238,16 @@ A high-fidelity project or work sample card. Extends SIFA position records with 
 
 **On blob storage**
 
-The `thumb` field references a blob stored on the user's own PDS via `com.atproto.repo.uploadBlob`. Kevara holds only the cryptographic blob reference (CID), not the image data itself. The blob is served directly from the user's PDS host, ensuring the user retains full ownership of their portfolio media.
+The `thumb` field references a blob stored on the user's own PDS via `com.atproto.repo.uploadBlob`. Verak holds only the cryptographic blob reference (CID), not the image data itself. The blob is served directly from the user's PDS host, ensuring the user retains full ownership of their portfolio media.
 
 **Example record**
 
 ```json
 {
-	"$type": "is.kevara.portfolio.item",
-	"title": "Kevara — Sovereign Professional Identity",
+	"$type": "is.verak.portfolio.item",
+	"title": "Verak — Sovereign Professional Identity",
 	"description": "A portable professional trust portfolio built natively on AT Protocol.",
-	"uri": "https://kevara.co",
+	"uri": "https://verak.co",
 	"techStack": ["Next.js", "AT Protocol", "Ozone", "Tailwind CSS"],
 	"layoutHint": "featured",
 	"createdAt": "2026-05-01T00:00:00.000Z"
@@ -256,13 +256,13 @@ The `thumb` field references a blob stored on the user's own PDS via `com.atprot
 
 ---
 
-### `is.kevara.networks`
+### `is.verak.networks`
 
 Stores the connected social network handle records for cross-network identity display.
 
 **Record key:** singleton  
-**Written by:** Kevara settings (Profile Sync flow)  
-**Read by:** Kevara cross-network verification panel, public profile
+**Written by:** Verak settings (Profile Sync flow)  
+**Read by:** Verak cross-network verification panel, public profile
 
 | Field      | Type          | Required | Description                        |
 | ---------- | ------------- | -------- | ---------------------------------- |
@@ -280,13 +280,13 @@ Stores the connected social network handle records for cross-network identity di
 
 ---
 
-### `is.kevara.embassy.theme`
+### `is.verak.embassy.theme`
 
 Stores the user's visual configuration for their Digital Embassy display layer.
 
 **Record key:** singleton  
-**Written by:** Kevara appearance settings  
-**Read by:** Kevara profile renderer
+**Written by:** Verak appearance settings  
+**Read by:** Verak profile renderer
 
 | Field          | Type   | Required | Description                                  |
 | -------------- | ------ | -------- | -------------------------------------------- |
@@ -294,18 +294,18 @@ Stores the user's visual configuration for their Digital Embassy display layer.
 | `primaryColor` | string | no       | Hex colour override for accent elements      |
 | `accentColor`  | string | no       | Hex colour override for trust indicators     |
 
-**Note:** Layout mode and colour overrides are Sovereign Pro features. Free accounts render in the default Kevara editorial layout.
+**Note:** Layout mode and colour overrides are Sovereign Pro features. Free accounts render in the default Verak editorial layout.
 
 ---
 
-### `is.kevara.endorsement` _(specified, not yet live)_
+### `is.verak.endorsement` _(specified, not yet live)_
 
 <Note>
 	This lexicon is specified and planned for a future release. It is not
-	currently written or read by the Kevara application.
+	currently written or read by the Verak application.
 </Note>
 
-A Kevara-native endorsement record that will supplement `id.sifa.endorsement` with richer metadata and Trust Gateway integration.
+A Verak-native endorsement record that will supplement `id.sifa.endorsement` with richer metadata and Trust Gateway integration.
 
 | Field               | Type              | Required | Description                                                  |
 | ------------------- | ----------------- | -------- | ------------------------------------------------------------ |
@@ -320,7 +320,7 @@ A Kevara-native endorsement record that will supplement `id.sifa.endorsement` wi
 
 ## Reading Records via XRPC
 
-Any AT Protocol client can read Kevara lexicon records from a user's PDS without authentication. The standard XRPC call is:
+Any AT Protocol client can read Verak lexicon records from a user's PDS without authentication. The standard XRPC call is:
 
 ```http
 GET {pds-host}/xrpc/com.atproto.repo.getRecord
@@ -334,7 +334,7 @@ GET {pds-host}/xrpc/com.atproto.repo.getRecord
 ```http
 GET https://bsky.social/xrpc/com.atproto.repo.getRecord
   ?repo=did:plc:example
-  &collection=is.kevara.linkpage
+  &collection=is.verak.linkpage
   &rkey=self
 ```
 
@@ -343,7 +343,7 @@ GET https://bsky.social/xrpc/com.atproto.repo.getRecord
 ```http
 GET https://bsky.social/xrpc/com.atproto.repo.listRecords
   ?repo=did:plc:example
-  &collection=is.kevara.portfolio.item
+  &collection=is.verak.portfolio.item
   &limit=50
 ```
 
@@ -365,7 +365,7 @@ Portfolio images and other media assets are stored as blobs on the user's PDS. T
 {pds-host}/xrpc/com.atproto.sync.getBlob?did={did}&cid={blob-cid}
 ```
 
-Kevara's `blobUrl()` helper in `lib/atproto.js` constructs this automatically from any blob ref, using the `pdsHost` stored alongside the record.
+Verak's `blobUrl()` helper in `lib/atproto.js` constructs this automatically from any blob ref, using the `pdsHost` stored alongside the record.
 
 ---
 
@@ -378,18 +378,18 @@ Kevara's `blobUrl()` helper in `lib/atproto.js` constructs this automatically fr
 | `id.sifa.education`        | Stable  | Open standard, versioned by SIFA      |
 | `id.sifa.endorsement`      | Stable  | Open standard, versioned by SIFA      |
 | `id.sifa.graph.follow`     | Stable  | Open standard, versioned by SIFA      |
-| `is.kevara.linkpage`       | Stable  | Active, written by current Kevara app |
-| `is.kevara.portfolio.item` | Stable  | Active, Sovereign Pro feature         |
-| `is.kevara.networks`       | Stable  | Active, written by Profile Sync       |
-| `is.kevara.embassy.theme`  | Stable  | Active, appearance settings           |
-| `is.kevara.endorsement`    | Planned | Not yet implemented                   |
+| `is.verak.linkpage`       | Stable  | Active, written by current Verak app |
+| `is.verak.portfolio.item` | Stable  | Active, Sovereign Pro feature         |
+| `is.verak.networks`       | Stable  | Active, written by Profile Sync       |
+| `is.verak.embassy.theme`  | Stable  | Active, appearance settings           |
+| `is.verak.endorsement`    | Planned | Not yet implemented                   |
 
-Publishing a lexicon implies a stability commitment. Kevara will not make breaking changes to a stable `is.kevara.*` schema without a major version increment and a minimum 90-day migration window. Additive fields (new optional properties) are non-breaking and may be added at any time.
+Publishing a lexicon implies a stability commitment. Verak will not make breaking changes to a stable `is.verak.*` schema without a major version increment and a minimum 90-day migration window. Additive fields (new optional properties) are non-breaking and may be added at any time.
 
 ---
 
 ## Data Sovereignty Notice
 
-All records in both namespaces are stored exclusively on the user's Personal Data Server. Kevara is a stateless display layer. It reads from and writes to the user's PDS via authenticated XRPC calls. No record data is stored on Kevara infrastructure.
+All records in both namespaces are stored exclusively on the user's Personal Data Server. Verak is a stateless display layer. It reads from and writes to the user's PDS via authenticated XRPC calls. No record data is stored on Verak infrastructure.
 
-Users can export all Kevara-associated records at any time via **Settings → Data & Export**. Disconnecting a PDS account removes Kevara's access instantly. The records themselves remain on the PDS under the user's full control.
+Users can export all Verak-associated records at any time via **Settings → Data & Export**. Disconnecting a PDS account removes Verak's access instantly. The records themselves remain on the PDS under the user's full control.

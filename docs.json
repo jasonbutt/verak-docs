@@ -1,11 +1,11 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "luma",
-  "name": "Kevara Docs",
+  "name": "Verak Docs",
   "logo": {
-    "dark": "/logo/dark.svg",
-    "light": "/logo/light.svg",
-    "href": "https://kevara.co"
+    "dark": "/logo/verak-gold-dark.svg",
+    "light": "/logo/verak-gold-light.svg",
+    "href": "https://verak.app"
   },
   "favicon": "/favicon.svg",
   "colors": {
@@ -21,14 +21,14 @@
   "navbar": {
     "links": [
       {
-        "label": "Kevara App",
-        "href": "https://kevara.app"
+        "label": "Verak",
+        "href": "https://verak.app"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Get Started",
-      "href": "https://www.kevara.co/get-started.html"
+      "href": "https://verak.app/get-started"
     }
   },
   "navigation": {
@@ -56,12 +56,12 @@
         {
           "anchor": "Trust Gateway",
           "icon": "shield-check",
-          "href": "https://trust.kevara.co"
+          "href": "https://trust.verak.app"
         },
         {
-          "anchor": "Kevara App",
+          "anchor": "Verak",
           "icon": "arrow-up-right-from-square",
-          "href": "https://kevara.app"
+          "href": "https://verak.app"
         },
         {
           "anchor": "AT Protocol",
@@ -73,8 +73,8 @@
   },
   "footer": {
     "socials": {
-      "bluesky": "https://bsky.app/profile/kevara.app",
-      "github": "https://github.com/kevara"
+      "bluesky": "https://bsky.app/profile/verak.app",
+      "github": "https://github.com/verak"
     }
   },
   "feedback": {
@@ -83,9 +83,9 @@
     "raiseIssue": true
   },
   "metadata": {
-    "og:title": "Kevara Developer Docs",
-    "og:description": "Technical documentation for the Kevara Trust Gateway, AT Protocol lexicons, and sovereign professional identity infrastructure.",
-    "og:image": "https://docs.kevara.app/images/og-card.png",
+    "og:title": "Verak Developer Docs",
+    "og:description": "Technical documentation for the Verak Trust Gateway, AT Protocol lexicons, and sovereign professional identity infrastructure.",
+    "og:image": "https://docs.verak.dev/images/og-card.png",
     "twitter:card": "summary_large_image"
   }
 }

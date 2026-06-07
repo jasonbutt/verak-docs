@@ -1,21 +1,21 @@
 ---
 title: Trust Gateway
-description: Kevara's stateless professional credential verification layer for the open web.
+description: Verak's stateless professional credential verification layer for the open web.
 ---
 
 # Trust Gateway
 
-The Kevara Trust Gateway is a stateless verification layer that translates cryptographically signed professional credentials into machine-readable trust signals. It does not store credential data. It does not act as an issuer of record. It sits between the fragmented world of professional credential standards and the AT Protocol identity layer, making verified professional trust portable, discoverable, and visually authoritative.
+The Verak Trust Gateway is a stateless verification layer that translates cryptographically signed professional credentials into machine-readable trust signals. It does not store credential data. It does not act as an issuer of record. It sits between the fragmented world of professional credential standards and the AT Protocol identity layer, making verified professional trust portable, discoverable, and visually authoritative.
 
 ---
 
 ## Architecture Principles
 
-The Trust Gateway is designed around four non-negotiable constraints that flow directly from Kevara's zero-database architecture.
+The Trust Gateway is designed around four non-negotiable constraints that flow directly from Verak's zero-database architecture.
 
 **No central storage.** Credential data lives on the user's Personal Data Server (PDS). The gateway reads, verifies, and translates. It never persists.
 
-**Label over record.** Trust signals are expressed as cryptographically signed Ozone labels issued by the Kevara Labeler (`did:plc:upeagalqts3yutsgc6vo5tn3`), not as self-asserted PDS records. This means a Kevara-verified signal is tamper-proof and portable across any AT Protocol client that subscribes to the labeler.
+**Label over record.** Trust signals are expressed as cryptographically signed Ozone labels issued by the Verak Labeler (`did:plc:upeagalqts3yutsgc6vo5tn3`), not as self-asserted PDS records. This means a Verak-verified signal is tamper-proof and portable across any AT Protocol client that subscribes to the labeler.
 
 **Open standards at every layer.** The gateway speaks Open Badges 3.0, W3C Verifiable Credentials Data Model 2.0, CLR 2.0, OID4VCI, and OID4VP. Institutional issuers and enterprise verifiers interact with standards they already know.
 
@@ -35,36 +35,36 @@ The gateway operates as the orchestration layer across three distinct protocol s
 | Credential issuance transport | OID4VCI | Issuer to wallet delivery |
 | Credential presentation transport | OID4VP | Wallet to verifier presentation |
 | Social portability and distribution | AT Protocol | Professional identity portability |
-| Trust orchestration and UX | Kevara | Editorial trust layer |
+| Trust orchestration and UX | Verak | Editorial trust layer |
 
-Kevara does not compete with issuers (universities, certification bodies, professional associations) or verifiers (HR platforms, ATS systems, regulated industry portals). Its intent is to sit above them as the connective tissue that makes fragmented standards actually usable.
+Verak does not compete with issuers (universities, certification bodies, professional associations) or verifiers (HR platforms, ATS systems, regulated industry portals). Its intent is to sit above them as the connective tissue that makes fragmented standards actually usable.
 
 ---
 
 ## Label Vocabulary
 
-The Kevara Labeler issues cryptographically signed labels against AT Protocol DIDs. Labels are queryable by any AT Protocol client that subscribes to the labeler. They propagate across Bluesky, Gander, EuroSky, and any compliant AT Protocol network.
+The Verak Labeler issues cryptographically signed labels against AT Protocol DIDs. Labels are queryable by any AT Protocol client that subscribes to the labeler. They propagate across Bluesky, Gander, EuroSky, and any compliant AT Protocol network.
 
 **Labeler DID:** `did:plc:upeagalqts3yutsgc6vo5tn3`
 
-**Labeler endpoint:** `https://labeler.kevara.app`
+**Labeler endpoint:** `https://labeler.verak.app`
 
 ### Labels
 
 | Label | Meaning | Trigger | Visible In |
 |---|---|---|---|
-| `kevara-verified` | Identity verified by Kevara | Manual review (future Keytrace flow) | Kevara + any subscribing AT Protocol client |
-| `kevara-pro` | Active Sovereign Pro subscriber | Subscription grant / removed on lapse | Kevara UI |
-| `kevara-gander` | Gander network participant | Gander ecosystem onboarding | Gander clients |
-| `kevara-eurosky` | EuroSky network participant | EuroSky ecosystem onboarding | EuroSky clients |
-| `kevara-recruiter` | Verified recruiter or employer | Manual review | Kevara directory |
+| `verak-verified` | Identity verified by Verak | Manual review (future Keytrace flow) | Verak + any subscribing AT Protocol client |
+| `verak-pro` | Active Sovereign Pro subscriber | Subscription grant / removed on lapse | Verak UI |
+| `verak-gander` | Gander network participant | Gander ecosystem onboarding | Gander clients |
+| `verak-eurosky` | EuroSky network participant | EuroSky ecosystem onboarding | EuroSky clients |
+| `verak-recruiter` | Verified recruiter or employer | Manual review | Verak directory |
 
 ### Querying Labels
 
 Any system can query current labels for a DID without authentication.
 
 ```http
-GET https://labeler.kevara.app/xrpc/com.atproto.label.queryLabels?subjects={did}
+GET https://labeler.verak.app/xrpc/com.atproto.label.queryLabels?subjects={did}
 ```
 
 **Response**
@@ -75,7 +75,7 @@ GET https://labeler.kevara.app/xrpc/com.atproto.label.queryLabels?subjects={did}
     {
       "src": "did:plc:upeagalqts3yutsgc6vo5tn3",
       "uri": "did:plc:user-did-here",
-      "val": "kevara-verified",
+      "val": "verak-verified",
       "cts": "2026-05-01T00:00:00.000Z",
       "neg": false
     }
@@ -83,14 +83,14 @@ GET https://labeler.kevara.app/xrpc/com.atproto.label.queryLabels?subjects={did}
 }
 ```
 
-A `neg: true` entry means the label has been revoked. Clients should filter these out. The Kevara frontend library (`lib/labels.js`) handles this automatically.
+A `neg: true` entry means the label has been revoked. Clients should filter these out. The Verak frontend library (`lib/labels.js`) handles this automatically.
 
 ### Subscribing to the Labeler
 
 Real-time label updates are available via WebSocket.
 
 ```http
-wss://labeler.kevara.app/xrpc/com.atproto.label.subscribeLabels
+wss://labeler.verak.app/xrpc/com.atproto.label.subscribeLabels
 ```
 
 This stream emits label events as they are applied or negated. Enterprise verifiers and third-party AT Protocol clients can subscribe to maintain live trust state without polling.
@@ -110,7 +110,7 @@ The OID4VP (OpenID for Verifiable Presentations) flow allows an external verifie
 **Step 1 — Verifier initiates a presentation request**
 
 ```http
-POST https://trust.kevara.app/v1/verify/request
+POST https://trust.verak.app/v1/verify/request
 Content-Type: application/json
 
 {
@@ -127,18 +127,18 @@ Content-Type: application/json
 
 ```json
 {
-  "presentation_uri": "https://trust.kevara.app/v1/verify/present/{request_id}",
+  "presentation_uri": "https://trust.verak.app/v1/verify/present/{request_id}",
   "request_id": "req_abc123",
   "expires_at": "2026-05-20T00:00:00.000Z",
-  "qr_code_url": "https://trust.kevara.app/v1/verify/qr/{request_id}"
+  "qr_code_url": "https://trust.verak.app/v1/verify/qr/{request_id}"
 }
 ```
 
-The user receives this URI via their Kevara profile and chooses whether to fulfil it.
+The user receives this URI via their Verak profile and chooses whether to fulfil it.
 
 **Step 3 — User selects credentials for disclosure**
 
-The user's Kevara interface presents a selective disclosure screen. They choose which credentials to include in the presentation. Nothing is transmitted until explicit confirmation.
+The user's Verak interface presents a selective disclosure screen. They choose which credentials to include in the presentation. Nothing is transmitted until explicit confirmation.
 
 **Step 4 — Gateway assembles and returns a Verifiable Presentation**
 
@@ -167,7 +167,7 @@ The user's Kevara interface presents a selective disclosure screen. They choose 
 **Step 5 — Verifier checks the response**
 
 ```http
-GET https://trust.kevara.app/v1/verify/result/{request_id}
+GET https://trust.verak.app/v1/verify/result/{request_id}
 Authorization: Bearer {verifier_token}
 ```
 
@@ -176,7 +176,7 @@ Authorization: Bearer {verifier_token}
   "status": "verified",
   "subject_did": "did:plc:user-did",
   "credentials_presented": ["OpenBadgeCredential"],
-  "kevara_labels": ["kevara-verified"],
+  "verak_labels": ["verak-verified"],
   "verified_at": "2026-05-18T12:00:00.000Z",
   "expires_at": "2026-05-20T00:00:00.000Z"
 }
@@ -197,7 +197,7 @@ Possible `status` values: `verified`, `pending`, `expired`, `revoked`, `rejected
 Credential issuers (universities, professional certification bodies, membership organisations) can deliver Open Badges 3.0 credentials directly to a recipient's AT Protocol DID via the OID4VCI flow.
 
 ```http
-POST https://trust.kevara.app/v1/issue/badge
+POST https://trust.verak.app/v1/issue/badge
 Content-Type: application/json
 Authorization: Bearer {issuer_api_key}
 
@@ -228,18 +228,18 @@ Authorization: Bearer {issuer_api_key}
 }
 ```
 
-On receipt, Kevara writes the credential as a blob to the user's PDS, links it to their `is.kevara.portfolio` record, and queues it for Ozone validation.
+On receipt, Verak writes the credential as a blob to the user's PDS, links it to their `is.verak.portfolio` record, and queues it for Ozone validation.
 
 ### CLR 2.0 Record Linking
 
-Comprehensive Learner Records covering longitudinal career and education history can be linked to a Kevara profile via the CLR 2.0 standard. The gateway maps CLR achievement records to `id.sifa.*` lexicon fields for AT Protocol portability.
+Comprehensive Learner Records covering longitudinal career and education history can be linked to a Verak profile via the CLR 2.0 standard. The gateway maps CLR achievement records to `id.sifa.*` lexicon fields for AT Protocol portability.
 
 ### Revocation Webhooks
 
 Issuers can notify the Trust Gateway when a credential's status changes (expiry, revocation, suspension) via a signed webhook.
 
 ```http
-POST https://trust.kevara.app/v1/webhooks/revoke
+POST https://trust.verak.app/v1/webhooks/revoke
 Content-Type: application/json
 X-Issuer-Signature: {hmac_signature}
 
@@ -251,7 +251,7 @@ X-Issuer-Signature: {hmac_signature}
 }
 ```
 
-On receipt, the gateway triggers a revocation assessment in the Ozone engine. If the credential was used as the basis for a `kevara-verified` label, the label is downgraded and the profile trust state is recalculated.
+On receipt, the gateway triggers a revocation assessment in the Ozone engine. If the credential was used as the basis for a `verak-verified` label, the label is downgraded and the profile trust state is recalculated.
 
 ---
 
@@ -259,7 +259,7 @@ On receipt, the gateway triggers a revocation assessment in the Ozone engine. If
 
 Trust signals degrade when the credentials underlying them change state. The Trust Gateway maintains revocation awareness at two levels.
 
-**Subscription-level revocation** is live. When a Sovereign Pro subscription lapses, the `kevara-pro` Ozone label is negated automatically via `lib/labels-server.js`. Any client querying the labeler will see the updated state within seconds.
+**Subscription-level revocation** is live. When a Sovereign Pro subscription lapses, the `verak-pro` Ozone label is negated automatically via `lib/labels-server.js`. Any client querying the labeler will see the updated state within seconds.
 
 **Credential-level revocation** is part of the Phase 2 roadmap. When implemented, the Ozone engine will monitor credential freshness, check issuer revocation registries, and dynamically downgrade trust indicators for stale or revoked credentials. Verifiers consuming Trust Gateway responses will always receive a `status` field that reflects current revocation state, not the state at time of issuance.
 
@@ -269,7 +269,7 @@ Trust signals degrade when the credentials underlying them change state. The Tru
 
 The Trust Gateway implements selective disclosure following the DIF Presentation Exchange specification. Users never expose a full credential record to a verifier. They expose only the specific claims required to satisfy a verification request.
 
-Disclosure bundles are ephemeral. They expire. They are not stored by Kevara. The user's PDS remains the single source of truth for all credential data.
+Disclosure bundles are ephemeral. They expire. They are not stored by Verak. The user's PDS remains the single source of truth for all credential data.
 
 Audience-specific views are supported. A user can create a presentation that exposes employment verification claims to a recruiter while keeping education records and certification details private.
 
@@ -283,7 +283,7 @@ The Trust Gateway is designed for forward compatibility with regional trust fram
 
 **Canadian alignment.** Gander network participants benefit from infrastructure hosted on Oracle Cloud Canada A1, ensuring data residency compliance for Canadian professionals in regulated industries.
 
-**HR and ATS interoperability.** External HR systems, applicant tracking platforms, and background verification services can integrate via the OID4VP verification flow without requiring any Kevara-specific SDK or proprietary integration.
+**HR and ATS interoperability.** External HR systems, applicant tracking platforms, and background verification services can integrate via the OID4VP verification flow without requiring any Verak-specific SDK or proprietary integration.
 
 ---
 
@@ -302,12 +302,12 @@ This specification is versioned. Breaking changes will increment the major versi
 To be explicit about current state:
 
 **Live today**
-- Ozone labeler at `labeler.kevara.app`
-- Label vocabulary: `kevara-verified`, `kevara-pro`, `kevara-gander`, `kevara-eurosky`, `kevara-recruiter`
+- Ozone labeler at `labeler.verak.app`
+- Label vocabulary: `verak-verified`, `verak-pro`, `verak-gander`, `verak-eurosky`, `verak-recruiter`
 - Public label query via `com.atproto.label.queryLabels`
 - WebSocket label subscription via `com.atproto.label.subscribeLabels`
-- Subscription-level revocation (Pro lapse negates `kevara-pro` label automatically)
-- Kevara profile trust signal rendering from live labels
+- Subscription-level revocation (Pro lapse negates `verak-pro` label automatically)
+- Verak profile trust signal rendering from live labels
 
 **Specified, not yet built**
 - OID4VP presentation flow
@@ -318,4 +318,4 @@ To be explicit about current state:
 - Selective disclosure UI
 - Enterprise verifier token system
 
-If you are an institution or enterprise verifier interested in early integration, reach out at [support@kevara.app](mailto:support@kevara.app).
+If you are an institution or enterprise verifier interested in early integration, reach out at [support@verak.app](mailto:support@verak.app).

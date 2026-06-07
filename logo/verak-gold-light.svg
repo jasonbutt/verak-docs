@@ -13,5 +13,5 @@
   <!-- Centre dot -->
   <circle cx="16" cy="16" r="1.2" fill="#2D3436" opacity="0.5"/>
   <!-- Wordmark -->
-  <text x="36" y="21" font-family="'Inter','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="16" font-weight="300" fill="#0B0C10" letter-spacing="2.5">verak</text>
+  <text x="36" y="21" font-family="'Inter','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="16" font-weight="300" fill="#E6B325" letter-spacing="2.5">verak</text>
 </svg>

@@ -1,6 +1,6 @@
 ---
 title: Changelog
-description: A versioned record of changes to Kevara's public APIs, lexicons, and Trust Gateway specification.
+description: A versioned record of changes to Verak's public APIs, lexicons, and Trust Gateway specification.
 ---
 
 # Changelog
@@ -12,7 +12,7 @@ description: A versioned record of changes to Kevara's public APIs, lexicons, an
 - Speaker Directory mode — members can publish a speaker profile with topics, formats, travel availability, and fee range; a Speaking tab on `/discover` lets visitors filter by topic, format, and travel; a Speaker badge on public profiles links to a bookable section with a "Book / Enquire" prompt
 - Regional discovery routes added — `/discover/ca`, `/discover/eu`, and `/discover/global` with region-specific results; Pro members surface first in all regions
 - Filters popover replaces the scrolling chip row — cleaner filter experience with category, Verified, and In a Planet options
-- Verified member dialog — clicking a verified avatar now opens a confirmation card showing the member's Kevara Verification status
+- Verified member dialog — clicking a verified avatar now opens a confirmation card showing the member's Verak Verification status
 
 **Analytics**
 - Sovereign analytics now compress older event history into summary records on the user's PDS, keeping the dashboard fast without losing historical data
@@ -27,7 +27,7 @@ description: A versioned record of changes to Kevara's public APIs, lexicons, an
 ## 0.1.401-beta — May 2026
 
 **Discovery Directory**
-- New lexicon published: `is.kevara.directory.public` — members write this record to their own PDS to opt in to the Kevara Discovery Directory
+- New lexicon published: `is.verak.directory.public` — members write this record to their own PDS to opt in to the Verak Discovery Directory
 - Record fields: `optedIn`, `includeInGlobal`, `headline` (120 char max), `roleCategory`, `createdAt`, `updatedAt`
 - New API: `GET /api/directory/public` — reads the authenticated user's directory record from their PDS
 - New API: `PUT /api/directory/public` — writes the record to the user's PDS; maintains `directory:index` Redis set and per-DID field cache automatically
@@ -58,7 +58,7 @@ description: A versioned record of changes to Kevara's public APIs, lexicons, an
 - Planets tab filter pills: All / Joined · N / Tech / Legal / Finance / Creative / Science
 - Subscribed planets float to top of "All" view under a dedicated "Joined Planets" section
 - `PlanetCard` now reflects subscription state — green border and "Joined ✓" badge when subscribed
-- Planets ownership notice updated to "Managed by Kevara.app"; DID-hardcoded check replaced with `isCurator` prop driven by `KEVARA_CURATOR_DID` env var
+- Planets ownership notice updated to "Managed by Verak.app"; DID-hardcoded check replaced with `isCurator` prop driven by `VERAK_CURATOR_DID` env var
 - Subscribed planet nodes appear on the Orbit Map with ringed ellipses, category colour, and member panel on click
 
 **Profile — Articles section**
@@ -75,14 +75,14 @@ description: A versioned record of changes to Kevara's public APIs, lexicons, an
 - `CredibilityTierPill` derives label exclusively from `score.tier`; never reads from `labels` array
 
 **Firehose Service**
-- Standalone Node.js worker deployed to Railway (`kevara-firehose`)
-- Connects to AT Protocol relay (`wss://bsky.network`) filtering Kevara/Sifa lexicon events
-- Connects to Ozone label stream (`wss://labeler.kevara.app`)
+- Standalone Node.js worker deployed to Railway (`verak-firehose`)
+- Connects to AT Protocol relay (`wss://bsky.network`) filtering Verak/Sifa lexicon events
+- Connects to Ozone label stream (`wss://labeler.verak.app`)
 - Writes Redis KPI counters (`kpi:{metric}:{date}`, 90-day TTL) and enqueues post jobs
 
 **Verification**
-- Settings verification status now checks both the Redis verification record and `labeler.kevara.app` directly; manually granted `kevara-verified` labels surface correctly
-- Ozone label display name updated: `kevara-verified` → `Kevara Verified`
+- Settings verification status now checks both the Redis verification record and `labeler.verak.app` directly; manually granted `verak-verified` labels surface correctly
+- Ozone label display name updated: `verak-verified` → `Verak Verified`
 
 **Brand**
 - Colour palette entry renamed: `Gander Gold` → `KV Gold` (`#E6B325` unchanged)
@@ -100,11 +100,11 @@ description: A versioned record of changes to Kevara's public APIs, lexicons, an
 
 **Trust Gateway**
 - Initial public specification published
-- Ozone labeler live at `labeler.kevara.app`
-- Label vocabulary live: `kevara-verified`, `kevara-pro`, `kevara-gander`, `kevara-eurosky`, `kevara-recruiter`
+- Ozone labeler live at `labeler.verak.app`
+- Label vocabulary live: `verak-verified`, `verak-pro`, `verak-gander`, `verak-eurosky`, `verak-recruiter`
 - Public label query endpoint live: `com.atproto.label.queryLabels`
 - WebSocket label subscription live: `com.atproto.label.subscribeLabels`
-- Subscription-level revocation live (Pro lapse negates `kevara-pro` automatically)
+- Subscription-level revocation live (Pro lapse negates `verak-pro` automatically)
 
 **Lexicon Reference**
-- Initial reference published covering all active `id.sifa.*` and `is.kevara.*` schemas
+- Initial reference published covering all active `id.sifa.*` and `is.verak.*` schemas
