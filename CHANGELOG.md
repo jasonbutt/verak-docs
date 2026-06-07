@@ -716,5 +716,25 @@ endorsement is contextualised to a role or credential.
 * SkillsSection in ResumeHub receives showEndorserStack={!isPublicView} to
   prevent avatar stack duplication below the Trust Portfolio on public profiles.
 ---
+### Added
+- Verified Accounts section on the Embassy: cryptographically verified external accounts 
+  (GitHub, domain, LinkedIn, npm, ORCiD, Mastodon) sourced from the user's own PDS via 
+  Keytrace. Visible to all viewers including unauthenticated shadow view.
+
+### Changed
+- Credibility score now incorporates verified Keytrace identity claims. 
+  Verified domain, LinkedIn, GitHub, and npm proofs contribute to Identity 
+  Integrity and Professional Completeness scores respectively.
+
+### Changed
+- Verification queue now displays verified external accounts (GitHub, domain, 
+  LinkedIn, npm, ORCiD, Mastodon) for each pending request, sourced live from 
+  the subject's PDS via Keytrace. High-confidence requests are flagged 
+  automatically when strong identity anchors are present.
+- Verification queue now shows the full submitted evidence including name, 
+  organisation, email, and category fields that were previously stored but 
+  not displayed.
+---
+
 
 *To update this file: paste it into the Kevara project in Claude, make changes in a session, and ask Claude to append the new entry at the bottom in the same format.*  
