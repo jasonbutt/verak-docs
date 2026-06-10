@@ -3,8 +3,8 @@
   "theme": "luma",
   "name": "Verak Docs",
   "logo": {
-    "dark": "/logo/verak-gold-dark.svg",
-    "light": "/logo/verak-gold-light.svg",
+    "dark": "/logo/dark.png",
+    "light": "/logo/light.png",
     "href": "https://verak.app"
   },
   "favicon": "/favicon.svg",
@@ -62,11 +62,6 @@
     ],
     "global": {
       "anchors": [
-        {
-          "anchor": "Trust Gateway",
-          "icon": "shield-check",
-          "href": "https://trust.verak.app"
-        },
         {
           "anchor": "Verak",
           "icon": "arrow-up-right-from-square",
