@@ -1,0 +1,68 @@
+---
+title: Integrate Verak Trust
+description: Three paths for consuming Verak trust signals in your own application, from zero-code label subscriptions to a REST convenience API.
+---
+
+# Integrate Verak Trust
+
+Verak trust signals are human-reviewed verifications expressed in two forms: cryptographically signed Ozone labels issued against AT Protocol DIDs, and W3C Verifiable Credentials stored on the member's own Personal Data Server. Both forms are publicly queryable, cryptographically verifiable, and require no relationship with Verak to consume.
+
+This section documents how to integrate those signals into your own application, client, or institution.
+
+---
+
+## What Verak Trust Signals Are
+
+A `verak-verified` label is not an automated check. It is a editorial decision made by a Verak reviewer after examining evidence signals: domain ownership, cross-platform professional footprint, and where applicable, third-party verification data from sources such as [Keytrace](https://keytrace.io). The label is the human-reviewed conclusion. The evidence that supports it is never exposed.
+
+Labels are issued by the Verak Labeler (`labeler.verak.app`) using the standard Ozone label infrastructure. Each label is signed with the labeler's private key and propagates to any AT Protocol client that subscribes to the labeler. Revocation propagates through the same channel: a negating label (`neg: true`) cancels the original. There is no separate revocation list to poll.
+
+Verifiable Credentials serve a different purpose. Where a label is a binary trust signal, a VC is a structured achievement record issued by `did:web:labeler.verak.app` and stored on the member's PDS as an `is.verak.passport.credential` record. VCs follow W3C VC Data Model 2.0 and Open Badges 3.0 and carry an Ed25519 cryptographic proof independently verifiable by any compliant VC library.
+
+---
+
+## The Three Integration Paths
+
+Choose the path that fits your use case. They are not mutually exclusive.
+
+### Path 1 — Subscribe to the labeler (zero code)
+
+Any Bluesky-compatible AT Protocol client can subscribe to the Verak Labeler using the standard labeler subscription flow. Once subscribed, the client displays Verak trust indicators wherever a verified member's DID appears — in threads, profile cards, search results, and anywhere else the client renders identity.
+
+This path requires no code, no API calls, and no Verak dependency beyond the labeler subscription itself. It is the right choice for AT Protocol clients that want to surface Verak trust without building a custom integration.
+
+[How to subscribe →](/integrate/labeler)
+
+### Path 2 — Query labels natively via XRPC (protocol-level)
+
+The Verak Labeler exposes standard AT Protocol XRPC endpoints: `com.atproto.label.queryLabels` for on-demand queries and `com.atproto.label.subscribeLabels` for real-time streaming. These are protocol-level endpoints with no Verak-specific contract. Any code that speaks XRPC can query them directly.
+
+This is the right choice when you need to check trust state for a specific DID at a specific moment, or when you want to maintain live trust state in your own system without depending on Verak infrastructure beyond the labeler itself.
+
+[XRPC query reference →](/integrate/labeler#querying-labels)
+
+### Path 3 — REST convenience API
+
+For applications that do not speak XRPC natively, Verak provides a thin REST layer that resolves a handle or DID to a trust summary. The API handles DID resolution, label querying, VC counting, and serialisation. Responses are CDN-cached and CORS-unrestricted.
+
+This is the right choice for web applications, server-side rendering pipelines, and any context where calling an HTTP JSON endpoint is simpler than implementing XRPC.
+
+[REST API reference →](/integrate/trust-api)
+
+---
+
+## Trust Model
+
+Labels are evidence reviewed by humans. `verak-verified` is never auto-granted based on automated signals alone — automated signals (domain ownership, linked accounts, Keytrace claims) are inputs to a reviewer's decision, not a sufficient condition on their own. This is a deliberate design choice: trust that can be gamed by automation is not trust worth surfacing.
+
+Revocation uses the same channel as issuance. When a label is revoked, a negating label event is emitted by the labeler and propagates to all subscribers immediately. Clients consuming the REST API benefit from the same revocation state, reflected within the CDN cache window (5 minutes for the trust summary endpoint).
+
+Verak does not maintain a revocation list, a blocklist, or a shadow state. The labeler stream is the single source of truth.
+
+---
+
+## What This API Will Never Return
+
+To be explicit: no Verak integration path exposes raw credibility scores, individual signal dimension values, email addresses, phone numbers, blob references, or the contents of any SIFA record (`id.sifa.*`). The public API surface is limited to: resolved DID and handle, active label names, tier name, and issued VC count. Everything else stays on the member's PDS under their control.
+
+[Full data boundary statement →](/integrate/trust-api#data-boundary)

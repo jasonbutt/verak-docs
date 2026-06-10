@@ -45,6 +45,15 @@
             "pages": ["trust-gateway", "lexicon-reference"]
           },
           {
+            "group": "Integrate Verak Trust",
+            "pages": [
+              "integrate/overview",
+              "integrate/labeler",
+              "integrate/credentials",
+              "integrate/trust-api"
+            ]
+          },
+          {
             "group": "Resources",
             "pages": ["trust-statement", "changelog"]
           }

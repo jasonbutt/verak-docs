@@ -1,0 +1,174 @@
+---
+title: Labeler — Native XRPC Path
+description: Query Verak trust labels directly via AT Protocol XRPC. No Verak dependency, no API keys, no intermediary.
+---
+
+# Labeler — Native XRPC Path
+
+The Verak Labeler is a standard Ozone instance. It speaks the AT Protocol label lexicons and nothing else. Any code that implements `com.atproto.label.queryLabels` or `com.atproto.label.subscribeLabels` can interact with it directly, without touching any Verak-specific infrastructure.
+
+---
+
+## Labeler Identity
+
+| Property | Value |
+|---|---|
+| Host | `labeler.verak.app` |
+| DID | `did:plc:upeagalqts3yutsgc6vo5tn3` |
+| XRPC base | `https://labeler.verak.app/xrpc/` |
+| WebSocket base | `wss://labeler.verak.app/xrpc/` |
+
+The labeler DID is the authoritative identity for signature verification. When you verify a label's cryptographic signature, you resolve this DID to retrieve the labeler's current signing key.
+
+---
+
+## Subscribing in Bluesky-Compatible Clients
+
+AT Protocol clients that support the standard labeler subscription flow can subscribe to the Verak Labeler directly from the client's settings UI. Once subscribed, the client surfaces Verak labels wherever a member's DID appears.
+
+**To subscribe in Bluesky:**
+
+1. Navigate to **Settings → Moderation → Labelers**
+2. Enter `labeler.verak.app` in the labeler search field
+3. Select **Subscribe**
+
+The client will then apply Verak label definitions to any DID that carries them. Label rendering (badges, trust indicators, visual callouts) is controlled by the client's own UI layer.
+
+Any Bluesky-compatible AT Protocol client that implements the `app.bsky.labeler.service` subscription protocol can subscribe the same way. Refer to your client's documentation for the specific subscription flow.
+
+---
+
+## Querying Labels
+
+On-demand label queries use the standard `com.atproto.label.queryLabels` XRPC method. No authentication is required.
+
+**Query by DID**
+
+```bash
+curl "https://labeler.verak.app/xrpc/com.atproto.label.queryLabels?uriPatterns=did:plc:EXAMPLE&sources=did:plc:upeagalqts3yutsgc6vo5tn3"
+```
+
+**Query by AT-URI (for labeling records or posts)**
+
+```bash
+curl "https://labeler.verak.app/xrpc/com.atproto.label.queryLabels?uriPatterns=at://did:plc:EXAMPLE/app.bsky.actor.profile/self&sources=did:plc:upeagalqts3yutsgc6vo5tn3"
+```
+
+The `sources` parameter scopes the query to the Verak Labeler specifically. Omitting it returns results from all labelers the subject may carry — include it to get only Verak labels.
+
+**Response**
+
+```json
+{
+  "labels": [
+    {
+      "ver": 1,
+      "src": "did:plc:upeagalqts3yutsgc6vo5tn3",
+      "uri": "did:plc:example-user-did",
+      "val": "verak-verified",
+      "cts": "2026-05-01T00:00:00.000Z",
+      "neg": false,
+      "sig": "u6Nb2a..."
+    },
+    {
+      "ver": 1,
+      "src": "did:plc:upeagalqts3yutsgc6vo5tn3",
+      "uri": "did:plc:example-user-did",
+      "val": "verak-pro",
+      "cts": "2026-05-10T00:00:00.000Z",
+      "neg": false,
+      "sig": "v7Kc3b..."
+    }
+  ]
+}
+```
+
+**Filtering revoked labels**
+
+A `neg: true` entry means the label has been revoked. Always filter out negated labels before acting on the result. A subject with a `neg: true` entry for `verak-verified` and no subsequent `neg: false` entry is **not** verified.
+
+```js
+const activelabels = labels.filter(l => !l.neg).map(l => l.val)
+```
+
+---
+
+## Real-Time Label Subscription
+
+Label state changes (issuance and revocation) stream in real time via WebSocket.
+
+```
+wss://labeler.verak.app/xrpc/com.atproto.label.subscribeLabels
+```
+
+The stream emits `#labels` events as they occur. Each event carries a `labels` array in the same shape as the query response above. Clients maintaining live trust state can apply these events incrementally without polling.
+
+**Optional cursor parameter**
+
+```
+wss://labeler.verak.app/xrpc/com.atproto.label.subscribeLabels?cursor=1234567890
+```
+
+Pass a cursor value from a previous event to resume from a known position in the stream. The labeler retains event history for replay. Omit the cursor to start from the current live position.
+
+---
+
+## Label Catalogue
+
+The following labels are issued by the Verak Labeler. Only these values will appear in query or subscription responses from `did:plc:upeagalqts3yutsgc6vo5tn3`.
+
+| Label | Meaning | How it is earned | How it is revoked |
+|---|---|---|---|
+| `verak-verified` | Identity verified by Verak editors | Manual review after submission of evidence signals; evidence examined by a human reviewer before the label is issued | Manual revocation by Verak editors; automatic downgrade on underlying credential expiry (Phase 2 roadmap) |
+| `verak-pro` | Active Sovereign Pro subscriber | Issued automatically on subscription activation | Negated automatically when the subscription lapses |
+| `verak-gander` | Gander network participant | Gander ecosystem onboarding flow | Manual removal or network exit |
+| `verak-eurosky` | EuroSky network participant | EuroSky ecosystem onboarding flow | Manual removal or network exit |
+| `verak-recruiter` | Verified recruiter or hiring organisation | Manual review by Verak editors | Manual revocation |
+
+<Note>
+  `verak-verified` is never auto-granted. Automated evidence signals (domain ownership, Keytrace claims, cross-platform footprint) are inputs to a human reviewer's decision. The label is the conclusion, not the signal.
+</Note>
+
+The machine-readable label definitions, including display metadata, are available from the REST definitions endpoint:
+
+```bash
+curl "https://verak.app/api/v1/labels/definitions"
+```
+
+[Definitions endpoint reference →](/integrate/trust-api#definitions-endpoint)
+
+---
+
+## Signature Verification
+
+Every label carries a `sig` field: an Ed25519 signature over the label payload, produced by the labeler's signing key.
+
+**Step 1 — Resolve the labeler's DID document**
+
+```bash
+curl "https://plc.directory/did:plc:upeagalqts3yutsgc6vo5tn3"
+```
+
+The response contains a `verificationMethods` array. Locate the key with `id` ending in `#atproto_label`. This is the labeler's current signing key expressed as a `did:key` multibase value.
+
+**Step 2 — Reconstruct the signed bytes**
+
+The signed payload is a CBOR-encoded label object with the `sig` field omitted. Use the AT Protocol `@atproto/lexicon` or `@atproto/repo` libraries to produce the canonical encoding, or refer to the [AT Protocol label specification](https://atproto.com/specs/label) for the exact encoding rules.
+
+**Step 3 — Verify the signature**
+
+```js
+import { verifySignature } from '@atproto/crypto'
+
+const isValid = await verifySignature(
+  signingKeyDidKey,   // did:key:... from the DID document
+  labelCborBytes,     // CBOR encoding of the label (sig field omitted)
+  label.sig           // base64url-encoded signature from the label
+)
+```
+
+A valid signature confirms the label was issued by `did:plc:upeagalqts3yutsgc6vo5tn3` and has not been tampered with. An invalid signature should be treated as if the label does not exist.
+
+<Note>
+  Verak's internal `lib/labels.js` handles signature verification automatically for the Verak application. The steps above are for external integrators verifying labels independently.
+</Note>

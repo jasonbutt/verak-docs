@@ -1,0 +1,236 @@
+---
+title: Trust API — REST Reference
+description: REST convenience endpoints for resolving Verak trust state by handle or DID. CDN-cached, CORS-unrestricted, no authentication required.
+---
+
+# Trust API — REST Reference
+
+For applications that do not speak XRPC natively, Verak provides two read-only REST endpoints: a trust summary by handle or DID, and a label definitions catalogue. Both endpoints are CDN-cached, CORS-unrestricted, and require no API key.
+
+<Note>
+  These endpoints are a convenience layer over the AT Protocol labeler. If your stack can make XRPC calls, the [native labeler path](/integrate/labeler) is the preferred integration — it removes Verak infrastructure as a dependency entirely.
+</Note>
+
+---
+
+## Base URL
+
+```
+https://verak.app/api/v1/
+```
+
+All endpoints under `/api/v1/` are versioned. Breaking changes (removed fields, changed semantics) will be released under `/api/v2/`. Additive changes (new optional fields) are non-breaking and may appear at any time.
+
+---
+
+## Trust Summary Endpoint
+
+### `GET /api/v1/trust/{subject}`
+
+Returns the trust state for a single subject. The subject can be an AT Protocol handle or a `did:plc` DID.
+
+**Cache:** `s-maxage=300` (5 minutes at the CDN edge)  
+**CORS:** `Access-Control-Allow-Origin: *`  
+**Authentication:** None
+
+#### Request examples
+
+**By handle**
+
+```bash
+curl "https://verak.app/api/v1/trust/jasonbu.online"
+```
+
+**By DID**
+
+```bash
+curl "https://verak.app/api/v1/trust/did:plc:abc123exampleDID"
+```
+
+Both forms return an identical response shape. Handle-based queries resolve the DID via the PLC directory before querying the labeler; the resolved DID is always present in the response.
+
+#### Response — 200 OK (verified member)
+
+```json
+{
+  "subject": {
+    "did": "did:plc:abc123exampleDID",
+    "handle": "jasonbu.online"
+  },
+  "verified": true,
+  "tier": "pro",
+  "labels": ["verak-verified", "verak-pro"],
+  "credentialsIssued": 1,
+  "resolvedAt": "2026-06-10T12:00:00.000Z"
+}
+```
+
+#### Response — 200 OK (resolvable non-member)
+
+A subject whose DID resolves via the PLC directory but who has no Verak labels returns 200 with `verified: false`. This is intentional — an unresolvable subject is a different failure mode from a resolved subject with no trust signals.
+
+```json
+{
+  "subject": {
+    "did": "did:plc:xyz789exampleDID",
+    "handle": "someone.bsky.social"
+  },
+  "verified": false,
+  "tier": null,
+  "labels": [],
+  "credentialsIssued": 0,
+  "resolvedAt": "2026-06-10T12:00:00.000Z"
+}
+```
+
+#### Response — 404 Not Found
+
+Returned when the subject cannot be resolved to a DID — either because the handle does not exist, the DID is malformed, or the PLC directory returned no result.
+
+```json
+{
+  "error": "subject_not_found",
+  "message": "Could not resolve a DID for the given subject."
+}
+```
+
+#### Field reference
+
+| Field | Type | Description |
+|---|---|---|
+| `subject.did` | string | Resolved `did:plc` for the subject |
+| `subject.handle` | string | AT Protocol handle, resolved from the PDS at query time |
+| `verified` | boolean | `true` if the subject carries an active `verak-verified` label |
+| `tier` | string \| null | `"pro"` (Sovereign Pro), `"free"` (registered member, no Pro label), or `null` (not a Verak member) |
+| `labels` | array[string] | Active label values from the Verak Labeler. Empty array if none. |
+| `credentialsIssued` | integer | Count of public `is.verak.passport.credential` records on the member's PDS. `0` if none or not a member. |
+| `resolvedAt` | string (ISO 8601) | Timestamp of when this response was computed. May reflect CDN cache age. |
+
+---
+
+## Definitions Endpoint
+
+### `GET /api/v1/labels/definitions`
+
+Returns the catalogue of labels issued by the Verak Labeler with display metadata. Useful for building local label renderers without hardcoding label semantics.
+
+**Cache:** `s-maxage=3600` (1 hour at the CDN edge)  
+**CORS:** `Access-Control-Allow-Origin: *`  
+**Authentication:** None
+
+#### Request
+
+```bash
+curl "https://verak.app/api/v1/labels/definitions"
+```
+
+#### Response — 200 OK
+
+```json
+{
+  "labeler": "did:plc:upeagalqts3yutsgc6vo5tn3",
+  "endpoint": "https://labeler.verak.app",
+  "labels": [
+    {
+      "value": "verak-verified",
+      "name": "Verified",
+      "description": "Identity verified through human-reviewed evidence signals.",
+      "earnedBy": "Manual review by Verak editors after the applicant submits verification evidence. Automated signals are inputs to the review, not a sufficient condition for issuance.",
+      "revokedBy": "Manual revocation by Verak editors, or automatic downgrade on underlying credential expiry (Phase 2 roadmap)."
+    },
+    {
+      "value": "verak-pro",
+      "name": "Sovereign Pro",
+      "description": "Active Sovereign Pro subscriber.",
+      "earnedBy": "Issued automatically on subscription activation.",
+      "revokedBy": "Negated automatically when the subscription lapses."
+    },
+    {
+      "value": "verak-gander",
+      "name": "Gander",
+      "description": "Verified Gander network participant.",
+      "earnedBy": "Gander ecosystem onboarding flow.",
+      "revokedBy": "Manual removal or network exit."
+    },
+    {
+      "value": "verak-eurosky",
+      "name": "EuroSky",
+      "description": "Verified EuroSky network participant.",
+      "earnedBy": "EuroSky ecosystem onboarding flow.",
+      "revokedBy": "Manual removal or network exit."
+    },
+    {
+      "value": "verak-recruiter",
+      "name": "Recruiter",
+      "description": "Verified recruiter or hiring organisation.",
+      "earnedBy": "Manual review by Verak editors.",
+      "revokedBy": "Manual revocation."
+    }
+  ]
+}
+```
+
+#### Field reference
+
+| Field | Type | Description |
+|---|---|---|
+| `labeler` | string | DID of the Verak Labeler |
+| `endpoint` | string | Labeler XRPC endpoint |
+| `labels[].value` | string | The label value as it appears in AT Protocol label records |
+| `labels[].name` | string | Human-readable display name |
+| `labels[].description` | string | One-sentence summary of what the label means |
+| `labels[].earnedBy` | string | How the label is issued |
+| `labels[].revokedBy` | string | How the label is revoked or negated |
+
+This endpoint returns only the allowlisted fields above. Internal metadata (review state, reviewer identity, applied signal weights) is never included.
+
+---
+
+## CORS
+
+Both endpoints are served with:
+
+```
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, OPTIONS
+Access-Control-Allow-Headers: Content-Type
+```
+
+CORS preflight (`OPTIONS`) requests succeed from any origin. Browser-based applications can call these endpoints directly without a proxy.
+
+---
+
+## Data Boundary {#data-boundary}
+
+To be explicit about what these endpoints will never return:
+
+| Data | Why it is excluded |
+|---|---|
+| Raw credibility score or dimension values | Scores are internal evidence signals used to inform human review, not a published claim. Publishing a score would create a gameable surface and misrepresent the human-reviewed nature of verification. |
+| Blob references or media CIDs | Media assets live on the member's PDS under their control. Verak has no right to redistribute references. |
+| SIFA record contents (`id.sifa.*`) | Career, education, and endorsement data belongs to the member and is readable directly from their PDS. Centralising it here would contradict the sovereignty architecture. |
+| Email, phone, or contact information | Verak never collects or stores contact data in a form that could be returned here. |
+| Reviewer identity or review notes | Internal to Verak's editorial process. |
+
+If a field you need is not in the response, it is not available via this API by design.
+
+---
+
+## Fair Use
+
+These endpoints are CDN-cached. There are no API keys, no rate-limit tiers, and no authentication. Cache behaviour means repeated identical requests within the cache window return the cached response at no additional cost to the origin.
+
+If you need bulk lookups, real-time streaming, or firehose-scale data, the right path is the AT Protocol labeler stream (`com.atproto.label.subscribeLabels`), not repeated calls to this API. [See the labeler page →](/integrate/labeler#real-time-label-subscription)
+
+---
+
+## Status Codes
+
+| Code | Meaning |
+|---|---|
+| `200` | Request succeeded. `verified` may be `true` or `false`. |
+| `404` | Subject could not be resolved to a DID. Check the `error` field for details. |
+| `429` | Rate limit exceeded at the CDN edge. Back off and retry. |
+| `500` | Upstream error (labeler or PLC directory unavailable). Treat as a transient failure. |
+
+5xx errors are transient. Retry with exponential backoff. Do not surface 5xx as a negative trust signal — inability to query is not the same as verified: false.
